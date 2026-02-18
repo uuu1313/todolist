@@ -255,6 +255,110 @@
             background: #4f46e5;
             border-color: #4f46e5;
         }
+
+        /* ==================== 移动端响应式优化 ==================== */
+
+        /* 手机屏幕优化 (430px 及以下) */
+        @media (max-width: 430px) {
+            /* 清单标题区域优化 */
+            .list-title-container {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.75rem;
+            }
+
+            .list-title-display {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .list-title {
+                font-size: 1.25rem;
+                line-height: 1.4;
+            }
+
+            .edit-title-btn,
+            .save-title-btn,
+            .cancel-title-btn {
+                min-height: 40px;
+                padding: 0.625rem 1rem;
+                font-size: 0.875rem;
+                min-width: 80px;
+            }
+
+            .list-title-edit {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .list-title-input {
+                width: 100%;
+                padding: 0.75rem;
+                font-size: 1.125rem;
+                min-height: 44px;
+            }
+
+            .delete-list-btn {
+                width: 100%;
+                min-height: 44px;
+                padding: 0.75rem 1rem;
+                font-size: 0.875rem;
+                text-align: center;
+            }
+
+            /* 优先级徽章优化 */
+            .priority-badge {
+                font-size: 0.6875rem;
+                padding: 0.125rem 0.5rem;
+            }
+
+            /* 截止日期显示优化 */
+            .due-date-display {
+                font-size: 0.6875rem;
+            }
+
+            /* 编辑模式内联样式覆盖 */
+            .todo-item.editing .todo-title {
+                font-size: 0.875rem;
+            }
+        }
+
+        /* 极小屏手机优化 (375px 及以下) */
+        @media (max-width: 375px) {
+            .list-title {
+                font-size: 1.125rem;
+            }
+
+            .list-title-input {
+                font-size: 1rem;
+            }
+
+            .priority-badge {
+                font-size: 0.625rem;
+                padding: 0.125rem 0.375rem;
+            }
+
+            .edit-title-btn,
+            .save-title-btn,
+            .cancel-title-btn,
+            .delete-list-btn {
+                font-size: 0.8125rem;
+                padding: 0.5rem 0.75rem;
+            }
+        }
+
+        /* 横屏模式优化 */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .list-title-container {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .list-title-display {
+                flex-direction: row;
+            }
+        }
     </style>
 </head>
 <body>
