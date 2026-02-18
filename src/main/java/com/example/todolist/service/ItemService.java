@@ -61,7 +61,7 @@ public class ItemService {
     public List<TodoItem> getItemsByToken(String token) {
         TodoList list = listRepository.findByToken(token)
                 .orElseThrow(() -> new NotFoundException("List not found"));
-        return itemRepository.findByListIdOrderByCompletedAscAndCreatedAtAsc(list.getId());
+        return itemRepository.findByListId(list.getId());
     }
 
     public TodoItem updateItem(Long id, String token, String title, Boolean completed) {

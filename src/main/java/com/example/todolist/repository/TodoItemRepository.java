@@ -11,6 +11,11 @@ import java.util.List;
 @Repository
 public interface TodoItemRepository extends JpaRepository<TodoItem, Long> {
 
-    @Query("SELECT ti FROM TodoItem ti WHERE ti.list.id = :listId ORDER BY ti.completed ASC, ti.createdAt ASC")
-    List<TodoItem> findByListIdOrderByCompletedAscAndCreatedAtAsc(@Param("listId") Long listId);
+    @Query("SELECT ti FROM TodoItem ti WHERE ti.list.id = :listId " +
+           "ORDER BY ti.completed ASC, " +
+           "ti.priority DESC, " +
+           "ti.dueDate ASC NULLS LAST, " +
+           "ti.updatedAt DESC, " +
+           "ti.id DESC")
+    List<TodoItem> findByListId(@Param("listId") Long listId);
 }
