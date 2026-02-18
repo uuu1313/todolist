@@ -196,7 +196,7 @@
         // 切换完成状态
         async function toggleComplete(id, completed) {
             try {
-                const response = await fetch(`/api/items/${id}`, {
+                const response = await fetch(`/api/items/${id}?token=${token}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ completed })
@@ -277,7 +277,7 @@
             }
 
             try {
-                const response = await fetch(`/api/items/${id}`, {
+                const response = await fetch(`/api/items/${id}?token=${token}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ title: newTitle })
@@ -308,7 +308,7 @@
             }
 
             try {
-                const response = await fetch(`/api/items/${id}`, {
+                const response = await fetch(`/api/items/${id}?token=${token}`, {
                     method: 'DELETE'
                 });
 

@@ -47,9 +47,16 @@ public class ItemService {
         return itemRepository.findByListIdOrderByCompletedAscAndCreatedAtAsc(list.getId());
     }
 
-    public TodoItem updateItem(Long id, String title, Boolean completed) {
+    public TodoItem updateItem(Long id, String token, String title, Boolean completed) {
         TodoItem item = itemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Item not found"));
+
+        // Verify item belongs to the list with given token
+        TodoList list = listRepository.findByToken(token)
+                .orElseThrow(() -> new NotFoundException("List not found"));
+        if (!item.getList().getId().equals(list.getId())) {
+            throw new NotFoundException("Item not found");
+        }
 
         if (title != null) {
             title = title.trim();
@@ -69,9 +76,17 @@ public class ItemService {
         return itemRepository.save(item);
     }
 
-    public void deleteItem(Long id) {
+    public void deleteItem(Long id, String token) {
         TodoItem item = itemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Item not found"));
+
+        // Verify item belongs to the list with given token
+        TodoList list = listRepository.findByToken(token)
+                .orElseThrow(() -> new NotFoundException("List not found"));
+        if (!item.getList().getId().equals(list.getId())) {
+            throw new NotFoundException("Item not found");
+        }
+
         itemRepository.delete(item);
     }
 }

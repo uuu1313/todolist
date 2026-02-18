@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,7 +22,7 @@ public class ItemController {
     @PostMapping
     public ResponseEntity<ItemResponse> addItem(
             @PathVariable String token,
-            @RequestBody CreateItemRequest request
+            @Valid @RequestBody CreateItemRequest request
     ) {
         TodoItem item = itemService.addItem(token, request.getTitle());
         return ResponseEntity.status(201).body(new ItemResponse(item));
