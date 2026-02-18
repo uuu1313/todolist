@@ -5,6 +5,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +20,9 @@ public class TodoList {
 
     @Column(unique = true, nullable = false, length = 8)
     private String token;
+
+    @Column(nullable = false, length = 100)
+    private String title;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -35,6 +40,15 @@ public class TodoList {
 
     public TodoList(String token) {
         this.token = token;
+        this.title = generateDefaultTitle();
+    }
+
+    /**
+     * 生成默认标题
+     * 格式: "我的清单 yyyy-MM-dd"
+     */
+    private String generateDefaultTitle() {
+        return "我的清单 " + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
     }
 
     // Getters and Setters
@@ -52,6 +66,14 @@ public class TodoList {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public LocalDateTime getCreatedAt() {

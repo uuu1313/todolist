@@ -3,6 +3,7 @@ package com.example.todolist.dto;
 import com.example.todolist.entity.TodoItem;
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class ItemResponse {
@@ -10,6 +11,8 @@ public class ItemResponse {
     private Long id;
     private String title;
     private Boolean completed;
+    private String priority;
+    private String dueDate;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
@@ -21,6 +24,10 @@ public class ItemResponse {
         this.id = item.getId();
         this.title = item.getTitle();
         this.completed = item.getCompleted();
+        this.priority = item.getPriority().name();
+        this.dueDate = item.getDueDate() != null
+            ? item.getDueDate().toString()
+            : null;
         this.createdAt = item.getCreatedAt();
         this.updatedAt = item.getUpdatedAt();
     }
@@ -47,6 +54,22 @@ public class ItemResponse {
 
     public void setCompleted(Boolean completed) {
         this.completed = completed;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
+    }
+
+    public String getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(String dueDate) {
+        this.dueDate = dueDate;
     }
 
     public LocalDateTime getCreatedAt() {

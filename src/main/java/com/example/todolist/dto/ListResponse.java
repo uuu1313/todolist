@@ -12,6 +12,7 @@ public class ListResponse {
 
     private Long id;
     private String token;
+    private String title;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
@@ -21,6 +22,7 @@ public class ListResponse {
     public ListResponse(TodoList list) {
         this.id = list.getId();
         this.token = list.getToken();
+        this.title = list.getTitle();
         this.createdAt = list.getCreatedAt();
         this.items = list.getItems().stream()
                 .map(ItemResponse::new)
@@ -41,6 +43,14 @@ public class ListResponse {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public LocalDateTime getCreatedAt() {

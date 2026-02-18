@@ -20,8 +20,22 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleBadRequest(IllegalArgumentException e) {
+        String message = e.getMessage();
+        String error = "Invalid request";
+
+        // 根据错误消息定制错误码
+        if (message != null) {
+            if (message.contains("优先级")) {
+                error = "Invalid priority";
+            } else if (message.contains("日期")) {
+                error = "Invalid dueDate";
+            } else if (message.contains("标题")) {
+                error = "Invalid title";
+            }
+        }
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("Invalid request", e.getMessage()));
+                .body(new ErrorResponse(error, message));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

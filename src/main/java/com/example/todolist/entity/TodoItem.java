@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -21,6 +22,13 @@ public class TodoItem {
 
     @Column(nullable = false, length = 200)
     private String title;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 6)
+    private Priority priority = Priority.MEDIUM;
+
+    @Column(name = "due_date")
+    private LocalDate dueDate;
 
     @Column(nullable = false)
     private Boolean completed = false;
@@ -40,6 +48,7 @@ public class TodoItem {
         this.list = list;
         this.title = title;
         this.completed = false;
+        this.priority = Priority.MEDIUM;
     }
 
     // Getters and Setters
@@ -66,6 +75,22 @@ public class TodoItem {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public Priority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Priority priority) {
+        this.priority = priority;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
     }
 
     public Boolean getCompleted() {

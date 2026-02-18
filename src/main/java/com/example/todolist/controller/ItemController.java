@@ -12,6 +12,8 @@ import jakarta.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import java.time.LocalDate;
+
 @RestController
 @RequestMapping("/api/lists/{token}/items")
 public class ItemController {
@@ -24,7 +26,10 @@ public class ItemController {
             @PathVariable String token,
             @Valid @RequestBody CreateItemRequest request
     ) {
-        TodoItem item = itemService.addItem(token, request.getTitle());
+        var priority = request.getPriority();
+        var dueDate = request.getDueDateAsLocalDate();
+
+        TodoItem item = itemService.addItem(token, request.getTitle(), priority, dueDate);
         return ResponseEntity.status(201).body(new ItemResponse(item));
     }
 
