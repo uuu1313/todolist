@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>待办清单详情</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="list-page">
+        <!-- 头部 -->
+        <div class="list-header">
+            <h1 class="list-title">我的待办清单</h1>
+        </div>
+
+        <!-- 分享链接区域 -->
+        <div class="share-section">
+            <span class="share-label">分享链接</span>
+            <div class="share-url-container">
+                <input type="text" id="shareUrl" class="share-url" readonly>
+                <button id="copyBtn" class="copy-button" onclick="copyShareUrl()">
+                    复制链接
+                </button>
+            </div>
+        </div>
+
+        <!-- 统计信息 -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-label">已完成</span>
+                <span class="stat-value" id="completedCount">0</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-item">
+                <span class="stat-label">总计</span>
+                <span class="stat-value" id="totalCount">0</span>
+            </div>
+        </div>
+
+        <!-- 添加事项表单 -->
+        <div class="add-item-form">
+            <div class="add-item-input-group">
+                <input
+                    type="text"
+                    id="newItemInput"
+                    class="add-item-input"
+                    placeholder="输入新事项..."
+                    maxlength="200"
+                >
+                <button id="addItemBtn" class="add-item-button">
+                    添加
+                </button>
+            </div>
+        </div>
+
+        <!-- 事项列表 -->
+        <ul class="todo-list" id="itemList">
+            <!-- 动态生成的事项列表 -->
+        </ul>
+    </div>
+
+    <script>
+        // 获取 token
+        const token = window.location.pathname.split('/').pop();
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 设置分享链接
+            const shareUrl = window.location.href;
+            document.getElementById('shareUrl').value = shareUrl;
+
+            // 加载事项列表
+            loadItems();
+        });
+
+        // 加载事项列表
+        async function loadItems() {
+            try {
+                const response = await fetch(`/api/lists/${token}/items`);
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        showToast('清单不存在', 'error');
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                    } else {
+                        throw new Error('加载失败');
+                    }
+                    return;
+                }
+
+                const items = await response.json();
+                renderItems(items);
+                updateStats(items);
+            } catch (error) {
+                console.error('Error loading items:', error);
+                showToast('加载事项列表失败，请刷新页面重试', 'error');
+            }
+        }
+
+        // 渲染事项列表
+        function renderItems(items) {
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = '';
+
+            if (items.length === 0) {
+                itemList.innerHTML = `
+                    <li class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <div class="empty-state-text">暂无事项，快添加一个吧！</div>
+                    </li>
+                `;
+                return;
+            }
+
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'todo-item' + (item.completed ? ' completed' : '');
+                li.dataset.id = item.id;
+                li.innerHTML = `
+                    <input
+                        type="checkbox"
+                        class="todo-checkbox"
+                        ${item.completed ? 'checked' : ''}
+                        onchange="toggleComplete(${item.id}, this.checked)"
+                    >
+                    <span class="todo-title">${escapeHtml(item.title)}</span>
+                    <div class="todo-actions">
+                        <button class="action-button edit-button" onclick="startEdit(${item.id})">
+                            编辑
+                        </button>
+                        <button class="action-button delete-button" onclick="deleteItem(${item.id})">
+                            删除
+                        </button>
+                    </div>
+                `;
+                itemList.appendChild(li);
+            });
+        }
+
+        // 更新统计信息
+        function updateStats(items) {
+            const total = items.length;
+            const completed = items.filter(item => item.completed).length;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('completedCount').textContent = completed;
+        }
+
+        // 添加事项
+        async function addItem() {
+            const input = document.getElementById('newItemInput');
+            const title = input.value.trim();
+
+            if (!title) {
+                showToast('请输入事项标题', 'error');
+                input.focus();
+                return;
+            }
+
+            if (title.length > 200) {
+                showToast('标题长度不能超过 200 个字符', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('addItemBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '添加中...';
+
+            try {
+                const response = await fetch(`/api/lists/${token}/items`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '添加失败');
+                }
+
+                input.value = '';
+                await loadItems();
+                showToast('添加成功', 'success');
+            } catch (error) {
+                console.error('Error adding item:', error);
+                showToast(error.message || '添加失败，请重试', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        // 切换完成状态
+        async function toggleComplete(id, completed) {
+            try {
+                const response = await fetch(`/api/items/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ completed })
+                });
+
+                if (!response.ok) {
+                    throw new Error('更新失败');
+                }
+
+                await loadItems();
+            } catch (error) {
+                console.error('Error toggling complete:', error);
+                showToast('更新失败，请重试', 'error');
+                await loadItems(); // 重新加载以恢复状态
+            }
+        }
+
+        // 开始编辑
+        function startEdit(id) {
+            const item = document.querySelector(`.todo-item[data-id="${id}"]`);
+            if (!item) return;
+
+            const titleSpan = item.querySelector('.todo-title');
+            const currentTitle = titleSpan.textContent;
+
+            item.classList.add('editing');
+
+            // 替换为输入框
+            titleSpan.innerHTML = `
+                <input
+                    type="text"
+                    class="todo-title-input"
+                    value="${escapeHtml(currentTitle)}"
+                    maxlength="200"
+                    onkeypress="if(event.key === 'Enter') saveEdit(${id})"
+                    onblur="cancelEdit(${id})"
+                >
+            `;
+
+            const input = titleSpan.querySelector('input');
+            input.focus();
+            input.select();
+
+            // 更新操作按钮
+            const actions = item.querySelector('.todo-actions');
+            actions.innerHTML = `
+                <button class="action-button save-button" onclick="saveEdit(${id})">
+                    保存
+                </button>
+                <button class="action-button cancel-button" onclick="cancelEdit(${id})">
+                    取消
+                </button>
+            `;
+
+            // 阻止点击其他地方时触发 blur
+            input.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+            });
+        }
+
+        // 保存编辑
+        async function saveEdit(id) {
+            const item = document.querySelector(`.todo-item[data-id="${id}"]`);
+            if (!item) return;
+
+            const input = item.querySelector('.todo-title-input');
+            const newTitle = input.value.trim();
+
+            if (!newTitle) {
+                showToast('标题不能为空', 'error');
+                input.focus();
+                return;
+            }
+
+            if (newTitle.length > 200) {
+                showToast('标题长度不能超过 200 个字符', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/items/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: newTitle })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '保存失败');
+                }
+
+                await loadItems();
+                showToast('保存成功', 'success');
+            } catch (error) {
+                console.error('Error saving item:', error);
+                showToast(error.message || '保存失败，请重试', 'error');
+            }
+        }
+
+        // 取消编辑
+        function cancelEdit(id) {
+            loadItems(); // 重新加载以恢复原状
+        }
+
+        // 删除事项
+        async function deleteItem(id) {
+            if (!confirm('确定要删除这个事项吗？')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/items/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('删除失败');
+                }
+
+                await loadItems();
+                showToast('删除成功', 'success');
+            } catch (error) {
+                console.error('Error deleting item:', error);
+                showToast('删除失败，请重试', 'error');
+            }
+        }
+
+        // 复制分享链接
+        async function copyShareUrl() {
+            const shareUrlInput = document.getElementById('shareUrl');
+            const copyBtn = document.getElementById('copyBtn');
+
+            try {
+                // 使用 Clipboard API
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareUrlInput.value);
+                } else {
+                    // 降级方案：选中并复制
+                    shareUrlInput.select();
+                    document.execCommand('copy');
+                }
+
+                // 更新按钮状态
+                copyBtn.textContent = '已复制！';
+                copyBtn.classList.add('copied');
+
+                showToast('链接已复制到剪贴板', 'success');
+
+                // 2秒后恢复按钮文本
+                setTimeout(() => {
+                    copyBtn.textContent = '复制链接';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            } catch (error) {
+                console.error('Error copying:', error);
+                showToast('复制失败，请手动复制', 'error');
+            }
+        }
+
+        // 显示提示消息
+        function showToast(message, type = 'success') {
+            // 移除已存在的 toast
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // 3秒后自动移除
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        document.body.removeChild(toast);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // HTML 转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 绑定添加按钮事件
+        document.getElementById('addItemBtn').addEventListener('click', addItem);
+
+        // 绑定输入框回车事件
+        document.getElementById('newItemInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addItem();
+            }
+        });
+    </script>
+</body>
+</html>

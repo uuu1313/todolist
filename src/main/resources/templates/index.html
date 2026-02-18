@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>共享待办清单 - 简单快速的协作工具</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="home-page">
+        <div class="home-header">
+            <h1 class="home-title">共享待办清单</h1>
+            <p class="home-subtitle">简单、快速的协作工具</p>
+        </div>
+
+        <button id="createListBtn" class="home-button">
+            创建新清单
+        </button>
+
+        <div id="result" style="margin-top: 2rem; display: none;" class="hidden">
+            <div style="background: var(--surface); padding: var(--spacing-lg); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                <h3 style="color: var(--success-color); margin-bottom: var(--spacing-md); font-size: 1.25rem;">
+                    清单已创建！
+                </h3>
+                <p style="color: var(--text-secondary); margin-bottom: var(--spacing-sm);">
+                    Token: <strong id="token" style="color: var(--text-primary); font-family: monospace; font-size: 1.125rem;"></strong>
+                </p>
+                <p style="margin-top: var(--spacing-lg);">
+                    <a id="listLink" href=""
+                       style="display: inline-block; padding: var(--spacing-md) var(--spacing-xl); background: var(--primary-color); color: white; text-decoration: none; border-radius: var(--radius-md); font-weight: 600; transition: all 0.2s ease;">
+                        查看清单
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('createListBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('createListBtn');
+            const originalText = btn.textContent;
+
+            // 显示加载状态
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> 创建中...';
+
+            try {
+                const response = await fetch('/api/lists', {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    throw new Error('创建失败');
+                }
+
+                const data = await response.json();
+                document.getElementById('token').textContent = data.token;
+                document.getElementById('listLink').href = '/lists/' + data.token;
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('result').classList.remove('hidden');
+
+                // 隐藏创建按钮
+                btn.style.display = 'none';
+
+                showToast('清单创建成功！', 'success');
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('创建清单失败，请稍后重试', 'error');
+
+                // 恢复按钮状态
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        // 显示提示消息
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            // 3秒后自动移除
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

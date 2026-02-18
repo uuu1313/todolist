@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(__NEW_LINE_d9dc47133346d16f__ echo \"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\")",
+      "Bash(__NEW_LINE_d9dc47133346d16f__ echo \"🎯 功能描述:\")",
+      "Bash(__NEW_LINE_d9dc47133346d16f__ echo \"💡 实现方案:\")",
+      "Bash(__NEW_LINE_d9dc47133346d16f__ echo \"🚀 立即实现...\")",
+      "Bash(__NEW_LINE_7b7d142458743412__ grep -n \"getItemsByToken\" /d/develop/project/todolist/src/main/java/com/example/todolist/service/ItemService.java)",
+      "Bash(TOKEN=\"1KmyDNlw\")",
+      "Bash(__NEW_LINE_0dccc83d7e3fb35c__ echo \"原始 JSON 响应:\")",
+      "Bash(python:*)",
+      "Bash(__NEW_LINE_6ab710dbfc52f86e__ echo \"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\")",
+      "Bash(__NEW_LINE_6ab710dbfc52f86e__ echo \"📋 功能: 自动排序已完成事项\")",
+      "Bash(__NEW_LINE_6ab710dbfc52f86e__ echo \"📝 修改的文件:\")",
+      "Bash(__NEW_LINE_6ab710dbfc52f86e__ echo \"🌐 立即测试:\")"
+    ]
+  }
+}
