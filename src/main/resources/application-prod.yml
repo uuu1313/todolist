@@ -8,8 +8,8 @@ spring:
     # 1. 优先读取环境变量 TODOLIST_DB_DIR
     # 2. 未设置则使用 ./data 目录
     # 3. 数据库文件名固定为 todolist（最终：todolist.mv.db）
-    # AUTO_SERVER=TRUE: 允许并发连接（避免文件锁问题）
-    url: jdbc:h2:file:${TODOLIST_DB_DIR:./data}/todolist;AUTO_SERVER=TRUE
+    # 单机部署不需要 AUTO_SERVER 参数
+    url: jdbc:h2:file:${TODOLIST_DB_DIR:./data}/todolist
     driver-class-name: org.h2.Driver
     username: sa
     password:

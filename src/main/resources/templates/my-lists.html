@@ -626,6 +626,10 @@
 
         // ==================== 初始化 ====================
         document.addEventListener('DOMContentLoaded', async () => {
+            // 防止重复初始化
+            if (window.__initialized) return;
+            window.__initialized = true;
+
             // 1. 确保用户存在
             const userId = await getOrCreateUserId();
             if (!userId) {

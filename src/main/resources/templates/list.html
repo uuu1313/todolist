@@ -745,6 +745,10 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', async () => {
+            // 防止重复初始化
+            if (window.__initialized) return;
+            window.__initialized = true;
+
             // 修复：检查是否有邀请参数，优先处理
             const urlParams = new URLSearchParams(window.location.search);
             const inviteToken = urlParams.get('invite');
@@ -898,6 +902,14 @@
                 const li = document.createElement('li');
                 li.className = 'todo-item' + (item.completed ? ' completed' : '');
                 li.dataset.id = item.id;
+                // 存储完整数据用于编辑冲突检测
+                li.dataset.itemData = JSON.stringify({
+                    id: item.id,
+                    title: item.title,
+                    priority: item.priority,
+                    dueDate: item.dueDate,
+                    version: item.updatedAt // 用更新时间作为版本标识
+                });
 
                 // 优先级配置
                 const priorityConfig = {
@@ -1049,6 +1061,9 @@
             }
         }
 
+        // ==================== 编辑冲突友好提示 ====================
+        const editingSnapshots = new Map(); // 使用 Map 存储多个编辑快照
+
         // 开始编辑
         function startEdit(id) {
             const item = document.querySelector(`.todo-item[data-id="${id}"]`);
@@ -1057,27 +1072,49 @@
             const titleSpan = item.querySelector('.todo-title');
             const currentTitle = titleSpan.textContent;
 
+            // 记录编辑快照（防御性检查）
+            if (item.dataset.itemData) {
+                try {
+                    editingSnapshots.set(id, JSON.parse(item.dataset.itemData));
+                } catch (e) {
+                    console.error('Failed to parse itemData:', e);
+                    editingSnapshots.set(id, {
+                        id: id,
+                        title: currentTitle,
+                        priority: 'MEDIUM',
+                        dueDate: null
+                    });
+                }
+            }
+
             item.classList.add('editing');
 
-            // 替换为编辑表单
+            // 获取快照数据（带防御性检查）
+            const snapshot = editingSnapshots.get(id) || {
+                title: currentTitle,
+                priority: 'MEDIUM',
+                dueDate: ''
+            };
+
+            // 替换为编辑表单（使用快照数据设置默认值）
             titleSpan.innerHTML = `
                 <div class="edit-form">
                     <div class="edit-form-group">
                         <label>标题</label>
-                        <input type="text" class="edit-form-title" id="editTitle-${id}" value="${escapeHtml(currentTitle)}" maxlength="200">
+                        <input type="text" class="edit-form-title" id="editTitle-${id}" value="${escapeHtml(snapshot.title)}" maxlength="200">
                     </div>
                     <div class="edit-form-row">
                         <div class="edit-form-group">
                             <label>优先级</label>
                             <select class="edit-form-select" id="editPriority-${id}">
-                                <option value="HIGH">高 🔴</option>
-                                <option value="MEDIUM">中 🟡</option>
-                                <option value="LOW">低 🟢</option>
+                                <option value="HIGH" ${snapshot.priority === 'HIGH' ? 'selected' : ''}>高 🔴</option>
+                                <option value="MEDIUM" ${snapshot.priority === 'MEDIUM' ? 'selected' : ''}>中 🟡</option>
+                                <option value="LOW" ${snapshot.priority === 'LOW' ? 'selected' : ''}>低 🟢</option>
                             </select>
                         </div>
                         <div class="edit-form-group">
                             <label>截止日期</label>
-                            <input type="date" class="edit-form-date" id="editDueDate-${id}">
+                            <input type="date" class="edit-form-date" id="editDueDate-${id}" value="${snapshot.dueDate || ''}">
                         </div>
                     </div>
                     <div class="edit-actions">
@@ -1086,6 +1123,9 @@
                     </div>
                 </div>
             `;
+
+            // 显示编辑提示
+            showToast('编辑中，请尽快保存，避免与他人修改冲突', 'info');
 
             // 阻止点击表单时触发 blur 或其他事件
             const form = titleSpan.querySelector('.edit-form');
@@ -1126,6 +1166,27 @@
             }
 
             try {
+                // 保存前检测冲突：重新获取最新数据
+                const checkResponse = await fetch(`/api/lists/${token}/items`);
+                if (checkResponse.ok) {
+                    const latestItems = await checkResponse.json();
+                    const latestItem = latestItems.find(i => i.id === id);
+                    const snapshot = editingSnapshots.get(id);
+
+                    if (latestItem && snapshot) {
+                        // 对比快照和最新数据（处理 null 和 undefined）
+                        const normalizeDate = (d) => d || '';
+                        const hasConflict =
+                            latestItem.title !== snapshot.title ||
+                            latestItem.priority !== snapshot.priority ||
+                            normalizeDate(latestItem.dueDate) !== normalizeDate(snapshot.dueDate);
+
+                        if (hasConflict) {
+                            showToast('保存前内容可能已被他人修改，本次保存可能覆盖对方改动', 'warning');
+                        }
+                    }
+                }
+
                 const requestData = {
                     title: newTitle,
                     priority: prioritySelect.value,
@@ -1143,6 +1204,7 @@
                     throw new Error(error.message || '保存失败');
                 }
 
+                editingSnapshots.delete(id); // 清除快照
                 await loadItems();
                 showToast('保存成功', 'success');
             } catch (error) {
@@ -1153,6 +1215,7 @@
 
         // 取消编辑
         function cancelEdit(id) {
+            editingSnapshots.delete(id); // 清除快照
             loadItems(); // 重新加载以恢复原状
         }
 

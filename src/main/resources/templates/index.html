@@ -98,6 +98,10 @@
 
         // 页面加载时确保用户存在
         document.addEventListener('DOMContentLoaded', async () => {
+            // 防止重复初始化
+            if (window.__initialized) return;
+            window.__initialized = true;
+
             await ensureUser();
         });
 

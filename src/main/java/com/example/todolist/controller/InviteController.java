@@ -25,7 +25,8 @@ public class InviteController {
     ) {
         // V2-B 暂不验证权限，后续版本添加
         InviteToken invite = inviteService.createInvite(token);
-        String inviteUrl = "http://localhost:8080/join?invite=" + invite.getToken();
+        // 使用相对路径，前端会自动补全完整 URL
+        String inviteUrl = "/lists/" + token + "?invite=" + invite.getToken();
         return ResponseEntity.status(201).body(new InviteResponse(invite, inviteUrl));
     }
 
