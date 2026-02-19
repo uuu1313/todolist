@@ -17,7 +17,25 @@
       "Bash(__NEW_LINE_6ab710dbfc52f86e__ echo \"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\")",
       "Bash(__NEW_LINE_6ab710dbfc52f86e__ echo \"📋 功能: 自动排序已完成事项\")",
       "Bash(__NEW_LINE_6ab710dbfc52f86e__ echo \"📝 修改的文件:\")",
-      "Bash(__NEW_LINE_6ab710dbfc52f86e__ echo \"🌐 立即测试:\")"
+      "Bash(__NEW_LINE_6ab710dbfc52f86e__ echo \"🌐 立即测试:\")",
+      "Bash(1 echo \" ✓ 提交已更新\" echo \"\" echo \"3️⃣ 推送到 GitHub...\" git push -u origin main)",
+      "Bash(PUSH_STATUS=$PIPESTATUS[0])",
+      "Bash(__NEW_LINE_9360b3609c46ad3d__ echo \"\")",
+      "Bash(if:*)",
+      "Bash(then)",
+      "Bash(else)",
+      "Bash(fi)",
+      "Bash(__NEW_LINE_f598e57e6768748c__ echo \"检查 Git 状态...\")",
+      "Bash(__NEW_LINE_f598e57e6768748c__ git status)",
+      "Bash(__NEW_LINE_f598e57e6768748c__ echo \"检查分支...\")",
+      "Bash(__NEW_LINE_f598e57e6768748c__ echo \"重新提交...\")",
+      "Bash(git commit:*)",
+      "Bash(__NEW_LINE_f598e57e6768748c__ echo \"\")",
+      "Bash(__NEW_LINE_d764792c9545bde9__ cd /d/develop/project/todolist)",
+      "Bash(__NEW_LINE_d764792c9545bde9__ echo \"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\")",
+      "Bash(__NEW_LINE_d764792c9545bde9__ echo \"推送代码到 https://github.com/uuu1313/todolist.git ...\")",
+      "Bash(__NEW_LINE_d764792c9545bde9__ git push -u origin main)",
+      "Bash(__NEW_LINE_d764792c9545bde9__ echo \"\")"
     ]
   }
 }

@@ -13,7 +13,7 @@ public interface TodoItemRepository extends JpaRepository<TodoItem, Long> {
 
     @Query("SELECT ti FROM TodoItem ti WHERE ti.list.id = :listId " +
            "ORDER BY ti.completed ASC, " +
-           "ti.priority DESC, " +
+           "CASE ti.priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END ASC, " +
            "ti.dueDate ASC NULLS LAST, " +
            "ti.updatedAt DESC, " +
            "ti.id DESC")

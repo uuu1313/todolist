@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试 Viewport</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .meta-info {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .resize-demo {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin: 10px 0;
+            background: white;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 100%;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>ViewPort 测试页面</h1>
+
+        <div class="meta-info">
+            <h3>Viewport 信息：</h3>
+            <p>当前宽度: <span id="screenWidth">-</span>px</p>
+            <p>当前高度: <span id="screenHeight">-</span>px</p>
+            <p>设备像素比: <span id="pixelRatio">-</span></p>
+        </div>
+
+        <div class="resize-demo">
+            <h2>交互元素测试</h2>
+            <input type="text" placeholder="输入框测试（最小 44px）">
+            <input type="date" placeholder="日期选择器">
+            <select>
+                <option>优先级选择器</option>
+                <option>高</option>
+                <option>中</option>
+                <option>低</option>
+            </select>
+            <button>按钮测试（最小 44px）</button>
+            <button style="width: 100%;">全宽按钮</button>
+        </div>
+
+        <div class="resize-demo">
+            <h2>响应式布局测试</h2>
+            <p>这个页面会根据屏幕宽度调整布局</p>
+            <button onclick="changeWidth(375)">模拟 375px 屏幕</button>
+            <button onclick="changeWidth(430)">模拟 430px 屏幕</button>
+            <button onclick="changeWidth(768)">模拟 768px 屏幕</button>
+            <button onclick="resetWidth()">重置</button>
+        </div>
+    </div>
+
+    <script>
+        // 显示屏幕信息
+        document.getElementById('screenWidth').textContent = window.screen.width;
+        document.getElementById('screenHeight').textContent = window.screen.height;
+        document.getElementById('pixelRatio').textContent = window.devicePixelRatio;
+
+        // 调整窗口宽度
+        function changeWidth(width) {
+            window.resizeTo(width, window.innerHeight);
+            document.getElementById('screenWidth').textContent = window.outerWidth;
+        }
+
+        function resetWidth() {
+            window.resizeTo(window.screen.availWidth, window.screen.availHeight);
+            document.getElementById('screenWidth').textContent = window.outerWidth;
+        }
+    </script>
+</body>
+</html>
