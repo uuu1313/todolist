@@ -359,6 +359,146 @@
                 flex-direction: row;
             }
         }
+
+        /* ==================== V2-B 协作功能样式 ==================== */
+
+        #members-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        #members-section h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        #members-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #members-list li {
+            padding: 10px 12px;
+            margin: 6px 0;
+            background: white;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        #members-list li button {
+            margin-left: auto;
+            padding: 4px 12px;
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #members-list li button:hover {
+            background: #fecaca;
+        }
+
+        #invite-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+        }
+
+        #invite-section h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        #generate-invite-btn {
+            padding: 8px 16px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        #generate-invite-btn:hover {
+            background: #4338ca;
+        }
+
+        #invite-link-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        #invite-link {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #374151;
+            background: white;
+        }
+
+        #invite-link-container button {
+            padding: 8px 16px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        #invite-link-container button:hover {
+            background: #059669;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 430px) {
+            #members-section,
+            #invite-section {
+                padding: 12px;
+                margin: 16px 0;
+            }
+
+            #members-list li {
+                padding: 8px 10px;
+                font-size: 13px;
+            }
+
+            #members-list li button {
+                padding: 4px 10px;
+                font-size: 12px;
+            }
+
+            #invite-link-container {
+                flex-direction: column;
+            }
+
+            #invite-link-container button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -443,20 +583,116 @@
         <ul class="todo-list" id="itemList">
             <!-- 动态生成的事项列表 -->
         </ul>
+
+        <!-- V2-B: 成员列表区域 -->
+        <section id="members-section">
+            <h3>成员列表</h3>
+            <ul id="members-list"></ul>
+        </section>
+
+        <!-- V2-B: 邀请成员区域 -->
+        <section id="invite-section" style="display:none;">
+            <h3>邀请成员</h3>
+            <button id="generate-invite-btn">生成邀请链接</button>
+            <div id="invite-link-container" style="display:none;">
+                <input type="text" id="invite-link" readonly style="flex:1; padding:8px; border:1px solid #d1d5db; border-radius:6px;">
+                <button onclick="copyInviteLink()">复制</button>
+            </div>
+        </section>
     </div>
 
     <script>
+        // ==================== V2-B 用户身份管理 ====================
+        let currentUserId = null;
+
+        // 获取或创建用户
+        async function ensureUser() {
+            let userId = localStorage.getItem('todolist_user_id');
+            if (!userId) {
+                try {
+                    const response = await fetch('/api/users', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    const user = await response.json();
+                    userId = user.id;
+                    localStorage.setItem('todolist_user_id', userId);
+                } catch (error) {
+                    console.error('Error creating user:', error);
+                }
+            }
+            currentUserId = userId;
+            return userId;
+        }
+
         // 获取 token
         const token = window.location.pathname.split('/').pop();
 
+        // 拦截 fetch 请求，自动添加 X-User-Id 头
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            if (currentUserId) {
+                options.headers = options.headers || {};
+                options.headers['X-User-Id'] = currentUserId;
+            }
+            return originalFetch(url, options);
+        };
+
+        // 获取 token（辅助函数）
+        function getTokenFromUrl() {
+            return token;
+        }
+
         // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 确保 user 存在
+            await ensureUser();
+
+            // 检查是否有邀请参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const inviteToken = urlParams.get('invite');
+
+            if (inviteToken && currentUserId) {
+                const shouldJoin = confirm('是否加入此清单？');
+                if (shouldJoin) {
+                    try {
+                        const response = await fetch('/api/lists/join', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                inviteToken: inviteToken,
+                                userId: parseInt(currentUserId)
+                            })
+                        });
+
+                        if (response.ok) {
+                            const data = await response.json();
+                            // 重定向到清单页面，移除 invite 参数
+                            window.location.href = `/lists/${data.listToken}`;
+                        } else {
+                            const error = await response.json();
+                            showToast(error.message || '加入清单失败', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error joining list:', error);
+                        showToast('加入清单失败，请重试', 'error');
+                    }
+                }
+                return;
+            }
+
             // 设置分享链接
             const shareUrl = window.location.href;
             document.getElementById('shareUrl').value = shareUrl;
 
             // 加载事项列表
             loadItems();
+
+            // V2-B: 加载成员列表
+            loadMembers();
+
+            // V2-B: 检查是否是所有者并显示邀请区域
+            checkOwnerAndShowInvite();
         });
 
         // 加载事项列表
@@ -948,6 +1184,122 @@
             }
         }
 
+        // ==================== V2-B 成员管理功能 ====================
+
+        // 加载成员列表
+        async function loadMembers() {
+            try {
+                const listToken = getTokenFromUrl();
+                const response = await fetch(`/api/lists/${listToken}/members`);
+
+                if (!response.ok) {
+                    console.error('Failed to load members');
+                    return;
+                }
+
+                const members = await response.json();
+
+                const list = document.getElementById('members-list');
+                if (!list) return;
+
+                list.innerHTML = members.map(m => `
+                    <li>
+                        ${escapeHtml(m.username)} (${m.role === 'OWNER' ? '所有者' : '成员'})
+                        ${m.role === 'OWNER' && m.id !== parseInt(currentUserId) ?
+                            `<button onclick="removeMember(${m.id})" style="margin-left:10px; padding:4px 8px; background:#fee2e2; color:#dc2626; border:none; border-radius:4px; cursor:pointer;">移除</button>` : ''}
+                    </li>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading members:', error);
+            }
+        }
+
+        // 检查是否是所有者并显示邀请区域
+        async function checkOwnerAndShowInvite() {
+            try {
+                const listToken = getTokenFromUrl();
+                const response = await fetch(`/api/lists/${listToken}/members`);
+
+                if (!response.ok) {
+                    return;
+                }
+
+                const members = await response.json();
+                const isOwner = members.some(m => m.id === parseInt(currentUserId) && m.role === 'OWNER');
+
+                if (isOwner) {
+                    document.getElementById('invite-section').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error checking owner status:', error);
+            }
+        }
+
+        // 生成邀请链接
+        async function generateInvite() {
+            try {
+                const listToken = getTokenFromUrl();
+                const response = await fetch(`/api/lists/${listToken}/invites`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '生成邀请链接失败');
+                }
+
+                const invite = await response.json();
+                const link = `${window.location.origin}${window.location.pathname}?invite=${invite.inviteToken}`;
+                document.getElementById('invite-link').value = link;
+                document.getElementById('invite-link-container').style.display = 'flex';
+                showToast('邀请链接生成成功', 'success');
+            } catch (error) {
+                console.error('Error generating invite:', error);
+                showToast(error.message || '生成邀请链接失败', 'error');
+            }
+        }
+
+        // 复制邀请链接
+        function copyInviteLink() {
+            const link = document.getElementById('invite-link');
+            link.select();
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(link.value);
+                } else {
+                    document.execCommand('copy');
+                }
+                showToast('邀请链接已复制！', 'success');
+            } catch (error) {
+                console.error('Error copying invite link:', error);
+                showToast('复制失败，请手动复制', 'error');
+            }
+        }
+
+        // 移除成员
+        async function removeMember(userId) {
+            if (!confirm('确定移除此成员？')) return;
+
+            try {
+                const listToken = getTokenFromUrl();
+                const response = await fetch(`/api/lists/${listToken}/members/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '移除成员失败');
+                }
+
+                showToast('成员已移除', 'success');
+                loadMembers(); // 重新加载成员列表
+            } catch (error) {
+                console.error('Error removing member:', error);
+                showToast(error.message || '移除成员失败', 'error');
+            }
+        }
+
         // HTML 转义
         function escapeHtml(text) {
             const div = document.createElement('div');
@@ -971,6 +1323,9 @@
                 saveListTitle();
             }
         });
+
+        // V2-B: 绑定生成邀请按钮事件
+        document.getElementById('generate-invite-btn').addEventListener('click', generateInvite);
     </script>
 </body>
 </html>

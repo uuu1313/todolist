@@ -24,12 +24,13 @@ public class ItemController {
     @PostMapping
     public ResponseEntity<ItemResponse> addItem(
             @PathVariable String token,
-            @Valid @RequestBody CreateItemRequest request
+            @Valid @RequestBody CreateItemRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
         var priority = request.getPriority();
         var dueDate = request.getDueDateAsLocalDate();
 
-        TodoItem item = itemService.addItem(token, request.getTitle(), priority, dueDate);
+        TodoItem item = itemService.addItem(token, request.getTitle(), priority, dueDate, userId);
         return ResponseEntity.status(201).body(new ItemResponse(item));
     }
 

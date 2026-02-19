@@ -20,6 +20,9 @@ public class ItemResponse {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
 
+    private String createdBy;
+    private String updatedBy;
+
     public ItemResponse(TodoItem item) {
         this.id = item.getId();
         this.title = item.getTitle();
@@ -30,6 +33,14 @@ public class ItemResponse {
             : null;
         this.createdAt = item.getCreatedAt();
         this.updatedAt = item.getUpdatedAt();
+
+        // 新增：创建者和更新者用户名
+        if (item.getCreatedBy() != null) {
+            this.createdBy = item.getCreatedBy().getUsername();
+        }
+        if (item.getUpdatedBy() != null) {
+            this.updatedBy = item.getUpdatedBy().getUsername();
+        }
     }
 
     public Long getId() {
@@ -86,5 +97,21 @@ public class ItemResponse {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public String getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(String updatedBy) {
+        this.updatedBy = updatedBy;
     }
 }

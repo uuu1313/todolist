@@ -64,8 +64,20 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("Failed to generate unique token", "系统繁忙,请稍后重试"));
     }
 
+    @ExceptionHandler(com.example.todolist.exception.ForbiddenException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(com.example.todolist.exception.ForbiddenException e) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse("Forbidden", e.getMessage()));
+    }
+
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException e) {
+        // Check if it's a conflict (already a member, etc.)
+        String message = e.getMessage();
+        if (message != null && message.contains("已是成员")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ErrorResponse("Conflict", message));
+        }
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse("Failed to generate unique token", "系统繁忙,请稍后重试"));
     }

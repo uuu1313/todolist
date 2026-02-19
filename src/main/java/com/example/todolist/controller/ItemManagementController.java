@@ -24,7 +24,8 @@ public class ItemManagementController {
     public ResponseEntity<ItemResponse> updateItem(
             @PathVariable Long id,
             @RequestParam String token,
-            @Valid @RequestBody UpdateItemRequest request
+            @Valid @RequestBody UpdateItemRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
         // 验证请求体至少包含一个字段
         if (!request.isValid()) {
@@ -38,7 +39,8 @@ public class ItemManagementController {
                 request.getTitle(),
                 request.getCompleted(),
                 request.getPriority(),
-                dueDateStr
+                dueDateStr,
+                userId
         );
         return ResponseEntity.ok(new ItemResponse(item));
     }

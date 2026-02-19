@@ -3,7 +3,9 @@ package com.example.todolist.controller;
 import com.example.todolist.dto.ListResponse;
 import com.example.todolist.dto.UpdateListRequest;
 import com.example.todolist.entity.TodoList;
+import com.example.todolist.entity.MemberRole;
 import com.example.todolist.service.ListService;
+import com.example.todolist.service.MemberService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +18,24 @@ public class ListController {
     @Autowired
     private ListService listService;
 
+    @Autowired
+    private MemberService memberService;
+
     @PostMapping
-    public ResponseEntity<ListResponse> createList() {
+    public ResponseEntity<ListResponse> createList(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId
+    ) {
         TodoList list = listService.createList();
+
+        // 如果提供了用户ID，自动添加为所有者
+        if (userId != null) {
+            try {
+                memberService.addMember(list.getToken(), userId, MemberRole.OWNER);
+            } catch (Exception e) {
+                // 忽略错误，保持向后兼容
+            }
+        }
+
         return ResponseEntity.status(201).body(new ListResponse(list));
     }
 

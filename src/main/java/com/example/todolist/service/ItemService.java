@@ -3,9 +3,11 @@ package com.example.todolist.service;
 import com.example.todolist.entity.Priority;
 import com.example.todolist.entity.TodoItem;
 import com.example.todolist.entity.TodoList;
+import com.example.todolist.entity.User;
 import com.example.todolist.exception.NotFoundException;
 import com.example.todolist.repository.TodoItemRepository;
 import com.example.todolist.repository.TodoListRepository;
+import com.example.todolist.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,18 +26,22 @@ public class ItemService {
     @Autowired
     private TodoItemRepository itemRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     public TodoItem addItem(String token, String title) {
-        return addItem(token, title, null, null);
+        return addItem(token, title, null, null, null);
     }
 
     /**
-     * 添加事项 (V2-A 扩展)
+     * 添加事项 (V2-A 扩展, V2-B 扩展)
      * @param token 清单 token
      * @param title 事项标题
      * @param priority 优先级 (可为 null,默认 MEDIUM)
      * @param dueDate 截止日期 (可为 null)
+     * @param userId 创建者用户ID (可为 null)
      */
-    public TodoItem addItem(String token, String title, Priority priority, LocalDate dueDate) {
+    public TodoItem addItem(String token, String title, Priority priority, LocalDate dueDate, Long userId) {
         // Validate title
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("标题不能为空");
@@ -54,6 +60,14 @@ public class ItemService {
         item.setPriority(priority != null ? priority : Priority.MEDIUM);
         item.setDueDate(dueDate);
 
+        // Set creator if userId provided
+        if (userId != null) {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null) {
+                item.setCreatedBy(user);
+            }
+        }
+
         return itemRepository.save(item);
     }
 
@@ -65,19 +79,20 @@ public class ItemService {
     }
 
     public TodoItem updateItem(Long id, String token, String title, Boolean completed) {
-        return updateItem(id, token, title, completed, null, null);
+        return updateItem(id, token, title, completed, null, null, null);
     }
 
     /**
-     * 更新事项 (V2-A 扩展)
+     * 更新事项 (V2-A 扩展, V2-B 扩展)
      * @param id 事项ID
      * @param token 清单 token
      * @param title 标题 (可为 null)
      * @param completed 完成状态 (可为 null)
      * @param priority 优先级 (可为 null)
      * @param dueDateStr 截止日期字符串 (可为 null)
+     * @param userId 更新者用户ID (可为 null)
      */
-    public TodoItem updateItem(Long id, String token, String title, Boolean completed, Priority priority, String dueDateStr) {
+    public TodoItem updateItem(Long id, String token, String title, Boolean completed, Priority priority, String dueDateStr, Long userId) {
         TodoItem item = itemRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Item not found"));
 
@@ -117,6 +132,14 @@ public class ItemService {
             } else {
                 LocalDate dueDate = parseDate(dueDateStr);
                 item.setDueDate(dueDate);
+            }
+        }
+
+        // Set updater if userId provided
+        if (userId != null) {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null) {
+                item.setUpdatedBy(user);
             }
         }
 
