@@ -1,0 +1,51 @@
+# 生产环境配置（H2 文件数据库 - 持久化）
+# 激活方式：--spring.profiles.active=prod 或 SPRING_PROFILES_ACTIVE=prod 环境变量
+
+spring:
+  # 数据源配置 - H2 文件数据库
+  datasource:
+    # 数据库文件路径配置：
+    # 1. 优先读取环境变量 TODOLIST_DB_DIR
+    # 2. 未设置则使用 ./data 目录
+    # 3. 数据库文件名固定为 todolist（最终：todolist.mv.db）
+    # AUTO_SERVER=TRUE: 允许并发连接（避免文件锁问题）
+    url: jdbc:h2:file:${TODOLIST_DB_DIR:./data}/todolist;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  # JPA 配置
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: validate  # 以 Flyway 为准，不自动建表/删除
+    show-sql: false  # 生产环境关闭 SQL 日志
+    properties:
+      hibernate:
+        format_sql: false
+
+  # H2 Console（生产环境关闭）
+  h2:
+    console:
+      enabled: false
+
+  # Thymeleaf 缓存开启（提升性能）
+  thymeleaf:
+    cache: true
+    prefix: classpath:/templates/
+    suffix: .html
+
+# 日志配置（生产环境）
+logging:
+  level:
+    com.example.todolist: INFO
+    org.springframework.web: WARN
+    org.hibernate: WARN
+    org.flywaydb: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    # 日志文件配置（可选）
+    name: ${TODOLIST_LOG_DIR:./logs}/todolist.log
+    max-size: 100MB
+    max-history: 30

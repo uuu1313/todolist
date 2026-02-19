@@ -1,0 +1,29 @@
+# Spring Boot 主配置文件
+# 支持 dev 和 prod 两个 profile
+
+spring:
+  application:
+    name: todolist
+
+  # 激活默认 profile（dev）
+  profiles:
+    active: dev
+
+  # Flyway 配置（通用）
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+# 服务器配置
+server:
+  port: 8081
+  servlet:
+    context-path: /
+
+# 应用信息
+info:
+  app:
+    name: ${spring.application.name}
+    description: 共享待办清单应用
+    version: 1.0.0
