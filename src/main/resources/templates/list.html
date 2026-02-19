@@ -740,48 +740,62 @@
             const urlParams = new URLSearchParams(window.location.search);
             const inviteToken = urlParams.get('invite');
 
-            if (inviteToken) {
-                // C) join 流程修复：先 ensureUser，再 join，再重定向到纯净 URL
+            // 问题2修复: 使用全局flag防止重复join
+            if (inviteToken && !window.__joining) {
+                window.__joining = true;  // 设置flag防止重复触发
+
+                // 先 ensureUser
                 await ensureUser();
 
                 const shouldJoin = confirm('是否加入此清单？');
-                if (shouldJoin) {
+                if (!shouldJoin) {
+                    // 用户取消，移除invite参数并刷新
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, '', cleanUrl);
+                    window.__joining = false;
+                    // 继续执行正常初始化流程
+                } else {
+                    // 尝试join
                     try {
                         const response = await fetch('/api/lists/join', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'X-User-Id': currentUserId  // 显式传递 user id
+                                'X-User-Id': currentUserId
                             },
                             body: JSON.stringify({
                                 inviteToken: inviteToken
                             })
                         });
 
+                        // 问题2修复: 无论返回"joined"还是"already member"，都视为成功
                         if (response.ok) {
                             const data = await response.json();
-                            // 重定向到清单页面，移除 invite 参数（干净的 URL）
-                            window.location.href = `/lists/${data.listToken}`;
-                            return;  // 重定向后不需要继续执行
+                            // 移除invite参数，使用replaceState避免页面刷新
+                            const cleanUrl = window.location.pathname;
+                            window.history.replaceState({}, '', cleanUrl);
+                            // 继续执行正常初始化流程（不return）
                         } else {
+                            // join失败（如邀请码无效）
                             const error = await response.json();
                             showToast(error.message || '加入清单失败', 'error');
-                            // join 失败，跳过后续初始化
-                            return;
+                            // 移除invite参数
+                            const cleanUrl = window.location.pathname;
+                            window.history.replaceState({}, '', cleanUrl);
+                            // 仍然继续初始化（可能已是成员，可以查看）
                         }
                     } catch (error) {
                         console.error('Error joining list:', error);
                         showToast('加入清单失败，请重试', 'error');
-                        // join 失败，跳过后续初始化
-                        return;
+                        // 移除invite参数
+                        const cleanUrl = window.location.pathname;
+                        window.history.replaceState({}, '', cleanUrl);
+                        // 仍然继续初始化
                     }
-                } else {
-                    // 用户取消加入，跳过后续初始化
-                    return;
                 }
             }
 
-            // B) 初始化时序统一：
+            // B) 统一初始化流程：
             // ensureUser() -> loadMembers() -> loadUserRole() -> renderInviteSection() -> loadItems()
             await ensureUser();
 
@@ -1315,17 +1329,30 @@
                 const list = document.getElementById('members-list');
                 if (!list) return;
 
-                const currentUserId = localStorage.getItem('todolist_user_id');
+                // 问题1修复: 确保类型统一
+                const currentUserId = Number(localStorage.getItem('todolist_user_id'));
+
+                // 计算当前用户角色
+                const myMember = members.find(m => m.userId == currentUserId);
+                const isOwner = myMember && myMember.role === 'OWNER';
 
                 list.innerHTML = members.map(m => {
                     const isMe = m.userId == currentUserId;
                     const marker = isMe ? ' <span class="me-marker">（我）</span>' : '';
                     const roleDisplay = m.role === 'OWNER' ? '所有者' : '成员';
 
+                    // 问题1修复: 移除按钮显示条件
+                    // 1) 当前用户必须是 OWNER
+                    // 2) 不能移除自己
+                    // 3) 不能移除 OWNER
+                    const canRemove = isOwner &&
+                                      m.userId != currentUserId &&
+                                      m.role !== 'OWNER';
+
                     return `
                         <li class="member-item ${isMe ? 'me' : ''}">
                             ${escapeHtml(m.username)} (${roleDisplay})${marker}
-                            ${m.role === 'OWNER' && m.userId != currentUserId ?
+                            ${canRemove ?
                                 `<button onclick="removeMember(${m.id})" style="margin-left:10px; padding:4px 8px; background:#fee2e2; color:#dc2626; border:none; border-radius:4px; cursor:pointer;">移除</button>` : ''}
                         </li>
                     `;
