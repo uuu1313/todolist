@@ -478,34 +478,32 @@
         }
 
         /**
-         * 通过 Token 或邀请链接加入清单
+         * 通过 Token 或邀请链接加入清单（修复版）
          */
         async function joinByTokenOrLink() {
             const input = document.getElementById('inviteInput');
             const value = input.value.trim();
 
+            // A. 基础输入验证
             if (!value) {
                 showError('请输入邀请链接或 Token');
                 return;
             }
 
-            // 解析 Token
+            // A. 格式验证并解析 Token
             let token = null;
 
-            // 尝试从完整链接中提取
-            // 格式1: https://xxx/lists/ABC123?invite=XYZ
-            // 格式2: /lists/ABC123?invite=XYZ
-            // 格式3: 直接输入 Token XYZ
             try {
                 const url = new URL(value);
+                // 尝试提取 invite 参数
                 const inviteToken = url.searchParams.get('invite');
                 if (inviteToken) {
                     token = inviteToken;
                 } else {
-                    // 可能是 /lists/ABC123 这样的路径
+                    // 尝试从路径提取（如 /lists/ABC123）
                     const pathParts = url.pathname.split('/');
                     const lastPart = pathParts[pathParts.length - 1];
-                    if (lastPart && lastPart.length > 0) {
+                    if (lastPart && lastPart !== 'lists' && lastPart.length > 0) {
                         token = lastPart;
                     }
                 }
@@ -514,36 +512,65 @@
                 token = value;
             }
 
-            // 如果是从链接中提取了清单 token（不是 invite token），需要特殊处理
-            // 这里假设用户输入的是 invite token 或包含 invite 参数的链接
-            if (!token) {
-                showError('无法识别邀请链接或 Token');
+            // A. Token 格式验证
+            // Token 应该是 1-20 位字母数字字符（根据项目实际格式调整）
+            if (!token || token.length === 0 || token.length > 100) {
+                showError('邀请链接/Token 格式不正确，请检查后重试');
+                return;
+            }
+
+            // 基本字符验证（只允许字母、数字、连字符、下划线）
+            const validTokenPattern = /^[a-zA-Z0-9_-]+$/;
+            if (!validTokenPattern.test(token)) {
+                showError('邀请链接/Token 格式不正确，请检查后重试');
                 return;
             }
 
             try {
+                // C. 预检查：调用 GET /api/my/lists 判断是否已加入
+                const myListsResponse = await fetch('/api/my/lists');
+                if (!myListsResponse.ok) {
+                    throw new Error('获取清单列表失败');
+                }
+
+                const myLists = await myListsResponse.json();
+                const alreadyJoined = myLists.some(list => list.token === token);
+
+                // C. 如果已加入，不发送 join 请求
+                if (alreadyJoined) {
+                    showError('你已加入该清单，无需重复加入');
+                    return;
+                }
+
+                // 调用 join API
                 const response = await fetch('/api/lists/join', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({inviteToken: token})
                 });
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || '加入清单失败');
+                // D. 处理不同的 HTTP 状态码
+                if (response.ok || response.status === 200 || response.status === 201) {
+                    // D. 加入成功
+                    input.value = '';
+                    showSuccess('加入成功！');
+                    await loadLists(); // 刷新列表
+                } else if (response.status === 409) {
+                    // 已加入（后端也返回冲突）
+                    const error = await response.json().catch(() => ({message: '已加入'}));
+                    showError(error.message || '你已加入该清单，无需重复加入');
+                } else if (response.status === 400 || response.status === 404) {
+                    // B. Token 不存在或无效
+                    const error = await response.json().catch(() => ({message: '邀请无效或不存在'}));
+                    showError(error.message || '未找到对应清单/邀请，链接可能已失效');
+                } else {
+                    // 其他错误
+                    const error = await response.json().catch(() => ({message: '加入失败'}));
+                    showError(error.message || `加入失败（HTTP ${response.status}）`);
                 }
-
-                // 清空输入框
-                input.value = '';
-
-                // 显示成功提示
-                showSuccess('成功加入清单！');
-
-                // 刷新列表
-                await loadLists();
             } catch (error) {
                 console.error('Error joining list:', error);
-                showError(error.message || '加入清单失败，请检查邀请链接或 Token');
+                showError(error.message || '加入清单失败，请重试');
             }
         }
 
