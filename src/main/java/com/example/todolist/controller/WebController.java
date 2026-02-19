@@ -15,4 +15,9 @@ public class WebController {
     public String list() {
         return "list";
     }
+
+    @GetMapping("/my-lists")
+    public String myLists() {
+        return "my-lists";
+    }
 }

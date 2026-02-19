@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的清单 - 共享待办清单</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #f3f4f6;
+            color: #4b5563;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            background: #e5e7eb;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title .badge {
+            background: #e5e7eb;
+            color: #4b5563;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.2s;
+        }
+
+        .list-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+        }
+
+        .list-info {
+            flex: 1;
+        }
+
+        .list-title {
+            font-size: 16px;
+            font-weight: 500;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .list-meta {
+            font-size: 13px;
+            color: #6b7280;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .role-badge {
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .role-owner {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .role-member {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .token {
+            font-family: monospace;
+            font-size: 11px;
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .enter-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .enter-btn:hover {
+            background: #5568d3;
+            transform: translateY(-1px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        .action-area {
+            display: grid;
+            gap: 16px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .helper-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+        }
+
+        @media (max-width: 640px) {
+            .list-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .enter-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>我的清单</h1>
+            <p>管理您创建和加入的待办清单</p>
+            <a href="/" class="nav-link">← 返回首页</a>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div id="loadingState" class="loading">
+            加载中...
+        </div>
+
+        <div id="contentState" style="display: none;">
+            <!-- 我创建的清单 -->
+            <div class="section">
+                <div class="section-title">
+                    📋 我创建的
+                    <span class="badge" id="ownerCount">0</span>
+                </div>
+                <div id="ownerLists"></div>
+            </div>
+
+            <!-- 我加入的清单 -->
+            <div class="section">
+                <div class="section-title">
+                    👥 我加入的
+                    <span class="badge" id="memberCount">0</span>
+                </div>
+                <div id="memberLists"></div>
+            </div>
+
+            <!-- 新建清单 -->
+            <div class="section">
+                <div class="section-title">➕ 新建清单</div>
+                <div class="action-area">
+                    <div class="input-group">
+                        <input type="text" id="newListName" placeholder="清单名称（可选，留空使用默认名称）" maxlength="100">
+                        <button class="btn btn-primary" onclick="createList()">创建</button>
+                    </div>
+                    <p class="helper-text">创建后您将成为该清单的所有者</p>
+                </div>
+            </div>
+
+            <!-- 加入清单 -->
+            <div class="section">
+                <div class="section-title">🔗 通过邀请加入</div>
+                <div class="action-area">
+                    <div class="input-group">
+                        <input type="text" id="inviteInput" placeholder="邀请链接或 Token（如 https://xxx/lists/ABC123?invite=XYZ 或 XYZ）">
+                        <button class="btn btn-secondary" onclick="joinByTokenOrLink()">加入</button>
+                    </div>
+                    <p class="helper-text">粘贴完整的邀请链接或只输入 Token</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 用户管理 ====================
+        let currentUserId = null;
+
+        /**
+         * 获取或创建用户 ID
+         */
+        async function getOrCreateUserId() {
+            let userId = localStorage.getItem('todolist_user_id');
+
+            if (!userId) {
+                try {
+                    const response = await fetch('/api/users', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    const user = await response.json();
+                    userId = user.id;
+                    localStorage.setItem('todolist_user_id', userId);
+                } catch (error) {
+                    console.error('Error creating user:', error);
+                    showError('创建用户失败，请刷新页面重试');
+                    return null;
+                }
+            }
+
+            currentUserId = userId;
+            return userId;
+        }
+
+        /**
+         * 拦截 fetch 请求，自动添加 X-User-Id 头
+         */
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            if (currentUserId) {
+                options.headers = options.headers || {};
+                options.headers['X-User-Id'] = currentUserId;
+            }
+            return originalFetch(url, options);
+        };
+
+        // ==================== 清单管理 ====================
+
+        /**
+         * 获取我的清单列表
+         */
+        async function fetchMyLists() {
+            try {
+                const response = await fetch('/api/my/lists');
+
+                if (!response.ok) {
+                    throw new Error('获取清单列表失败');
+                }
+
+                const lists = await response.json();
+                return lists;
+            } catch (error) {
+                console.error('Error fetching my lists:', error);
+                showError('获取清单列表失败，请刷新页面重试');
+                return [];
+            }
+        }
+
+        /**
+         * 渲染"我创建的"清单区域
+         */
+        function renderOwnerSection(lists) {
+            const ownerLists = lists.filter(l => l.role === 'OWNER');
+            const container = document.getElementById('ownerLists');
+            const countBadge = document.getElementById('ownerCount');
+
+            countBadge.textContent = ownerLists.length;
+
+            if (ownerLists.length === 0) {
+                container.innerHTML = '<div class="empty-state">您还没有创建任何清单</div>';
+                return;
+            }
+
+            container.innerHTML = ownerLists.map(list => `
+                <div class="list-item">
+                    <div class="list-info">
+                        <div class="list-title">${escapeHtml(list.title)}</div>
+                        <div class="list-meta">
+                            <span class="token">Token: ${escapeHtml(list.token)}</span>
+                            <span class="role-badge role-owner">所有者</span>
+                        </div>
+                    </div>
+                    <a href="/lists/${escapeHtml(list.token)}" class="enter-btn">进入</a>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * 渲染"我加入的"清单区域
+         */
+        function renderMemberSection(lists) {
+            const memberLists = lists.filter(l => l.role === 'MEMBER');
+            const container = document.getElementById('memberLists');
+            const countBadge = document.getElementById('memberCount');
+
+            countBadge.textContent = memberLists.length;
+
+            if (memberLists.length === 0) {
+                container.innerHTML = '<div class="empty-state">您还没有加入任何清单</div>';
+                return;
+            }
+
+            container.innerHTML = memberLists.map(list => `
+                <div class="list-item">
+                    <div class="list-info">
+                        <div class="list-title">${escapeHtml(list.title)}</div>
+                        <div class="list-meta">
+                            <span class="token">Token: ${escapeHtml(list.token)}</span>
+                            <span class="role-badge role-member">成员</span>
+                        </div>
+                    </div>
+                    <a href="/lists/${escapeHtml(list.token)}" class="enter-btn">进入</a>
+                </div>
+            `).join('');
+        }
+
+        /**
+         * 新建清单
+         */
+        async function createList() {
+            const input = document.getElementById('newListName');
+            const title = input.value.trim();
+
+            try {
+                const response = await fetch('/api/lists', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(title ? {title: title} : {})
+                });
+
+                if (!response.ok) {
+                    throw new Error('创建清单失败');
+                }
+
+                const data = await response.json();
+
+                // 清空输入框
+                input.value = '';
+
+                // 刷新列表
+                await loadLists();
+
+                // 跳转到清单详情页
+                window.location.href = `/lists/${data.token}`;
+            } catch (error) {
+                console.error('Error creating list:', error);
+                showError('创建清单失败，请重试');
+            }
+        }
+
+        /**
+         * 通过 Token 或邀请链接加入清单
+         */
+        async function joinByTokenOrLink() {
+            const input = document.getElementById('inviteInput');
+            const value = input.value.trim();
+
+            if (!value) {
+                showError('请输入邀请链接或 Token');
+                return;
+            }
+
+            // 解析 Token
+            let token = null;
+
+            // 尝试从完整链接中提取
+            // 格式1: https://xxx/lists/ABC123?invite=XYZ
+            // 格式2: /lists/ABC123?invite=XYZ
+            // 格式3: 直接输入 Token XYZ
+            try {
+                const url = new URL(value);
+                const inviteToken = url.searchParams.get('invite');
+                if (inviteToken) {
+                    token = inviteToken;
+                } else {
+                    // 可能是 /lists/ABC123 这样的路径
+                    const pathParts = url.pathname.split('/');
+                    const lastPart = pathParts[pathParts.length - 1];
+                    if (lastPart && lastPart.length > 0) {
+                        token = lastPart;
+                    }
+                }
+            } catch (e) {
+                // 不是完整 URL，当作 Token 处理
+                token = value;
+            }
+
+            // 如果是从链接中提取了清单 token（不是 invite token），需要特殊处理
+            // 这里假设用户输入的是 invite token 或包含 invite 参数的链接
+            if (!token) {
+                showError('无法识别邀请链接或 Token');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/lists/join', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({inviteToken: token})
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '加入清单失败');
+                }
+
+                // 清空输入框
+                input.value = '';
+
+                // 显示成功提示
+                showSuccess('成功加入清单！');
+
+                // 刷新列表
+                await loadLists();
+            } catch (error) {
+                console.error('Error joining list:', error);
+                showError(error.message || '加入清单失败，请检查邀请链接或 Token');
+            }
+        }
+
+        // ==================== 工具函数 ====================
+
+        /**
+         * 加载列表数据
+         */
+        async function loadLists() {
+            const lists = await fetchMyLists();
+            renderOwnerSection(lists);
+            renderMemberSection(lists);
+        }
+
+        /**
+         * 显示错误消息
+         */
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+            }, 5000);
+        }
+
+        /**
+         * 显示成功消息
+         */
+        function showSuccess(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.background = '#d1fae5';
+            errorDiv.style.color = '#065f46';
+            errorDiv.classList.add('show');
+            setTimeout(() => {
+                errorDiv.classList.remove('show');
+                errorDiv.style.background = '#fef2f2';
+                errorDiv.style.color = '#991b1b';
+            }, 3000);
+        }
+
+        /**
+         * HTML 转义
+         */
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ==================== 初始化 ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 1. 确保用户存在
+            const userId = await getOrCreateUserId();
+            if (!userId) {
+                return; // 用户创建失败，已显示错误
+            }
+
+            // 2. 加载清单列表
+            await loadLists();
+
+            // 3. 显示内容
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('contentState').style.display = 'block';
+        });
+    </script>
+</body>
+</html>
