@@ -30,6 +30,17 @@ public class UserController {
         return ResponseEntity.status(201).body(new UserResponse(user));
     }
 
+    /**
+     * 获取用户信息（用于验证用户是否存在）
+     * V2-B: 前端自愈机制 - 验证 localStorage 中的 user_id 是否有效
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> getUser(@PathVariable Long id) {
+        return userService.findById(id)
+                .map(user -> ResponseEntity.ok(new UserResponse(user)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @PatchMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Long id,

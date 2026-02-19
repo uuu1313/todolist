@@ -36,6 +36,64 @@
     </div>
 
     <script>
+        // ==================== V2-B 用户身份管理 ====================
+        let currentUserId = null;
+
+        // 获取或创建用户（带自愈机制）
+        async function ensureUser() {
+            let userId = localStorage.getItem('todolist_user_id');
+
+            // V2-B 自愈机制：验证用户是否存在
+            if (userId) {
+                try {
+                    const response = await fetch(`/api/users/${userId}`);
+                    if (!response.ok) {
+                        // 用户不存在（后端重启/清库后），重新创建
+                        console.log('User not found, recreating...');
+                        userId = null;
+                    }
+                } catch (error) {
+                    console.error('Error validating user:', error);
+                    userId = null;
+                }
+            }
+
+            // 如果没有用户 ID 或验证失败，创建新用户
+            if (!userId) {
+                try {
+                    const response = await fetch('/api/users', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    const user = await response.json();
+                    userId = user.id;
+                    localStorage.setItem('todolist_user_id', userId);
+                    console.log('User created:', userId);
+                } catch (error) {
+                    console.error('Error creating user:', error);
+                }
+            }
+
+            currentUserId = userId;
+            return userId;
+        }
+
+        // 拦截 fetch 请求，自动添加 X-User-Id 头
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options = {}) {
+            if (currentUserId) {
+                options.headers = options.headers || {};
+                options.headers['X-User-Id'] = currentUserId;
+            }
+            return originalFetch(url, options);
+        };
+
+        // 页面加载时确保用户存在
+        document.addEventListener('DOMContentLoaded', async () => {
+            await ensureUser();
+        });
+
+        // ==================== 创建清单逻辑 ====================
         document.getElementById('createListBtn').addEventListener('click', async () => {
             const btn = document.getElementById('createListBtn');
             const originalText = btn.textContent;

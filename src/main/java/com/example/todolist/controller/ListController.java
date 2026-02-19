@@ -9,6 +9,7 @@ import com.example.todolist.service.MemberService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,18 +23,15 @@ public class ListController {
     private MemberService memberService;
 
     @PostMapping
+    @Transactional
     public ResponseEntity<ListResponse> createList(
             @RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
         TodoList list = listService.createList();
 
-        // 如果提供了用户ID，自动添加为所有者
+        // V2-B: 创建清单时自动添加创建者为 OWNER
         if (userId != null) {
-            try {
-                memberService.addMember(list.getToken(), userId, MemberRole.OWNER);
-            } catch (Exception e) {
-                // 忽略错误，保持向后兼容
-            }
+            memberService.addMember(list.getToken(), userId, MemberRole.OWNER);
         }
 
         return ResponseEntity.status(201).body(new ListResponse(list));

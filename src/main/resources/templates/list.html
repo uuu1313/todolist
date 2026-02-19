@@ -605,9 +605,26 @@
         // ==================== V2-B 用户身份管理 ====================
         let currentUserId = null;
 
-        // 获取或创建用户
+        // 获取或创建用户（带自愈机制）
         async function ensureUser() {
             let userId = localStorage.getItem('todolist_user_id');
+
+            // V2-B 自愈机制：验证用户是否存在
+            if (userId) {
+                try {
+                    const response = await fetch(`/api/users/${userId}`);
+                    if (!response.ok) {
+                        // 用户不存在（后端重启/清库后），重新创建
+                        console.log('User not found, recreating...');
+                        userId = null;
+                    }
+                } catch (error) {
+                    console.error('Error validating user:', error);
+                    userId = null;
+                }
+            }
+
+            // 如果没有用户 ID 或验证失败，创建新用户
             if (!userId) {
                 try {
                     const response = await fetch('/api/users', {
@@ -617,10 +634,12 @@
                     const user = await response.json();
                     userId = user.id;
                     localStorage.setItem('todolist_user_id', userId);
+                    console.log('User created:', userId);
                 } catch (error) {
                     console.error('Error creating user:', error);
                 }
             }
+
             currentUserId = userId;
             return userId;
         }
@@ -645,14 +664,15 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', async () => {
-            // 确保 user 存在
+            // V2-B: 确保 user 存在且有效（带自愈机制）
             await ensureUser();
 
             // 检查是否有邀请参数
             const urlParams = new URLSearchParams(window.location.search);
             const inviteToken = urlParams.get('invite');
 
-            if (inviteToken && currentUserId) {
+            // V2-B: 处理邀请加入（currentUserId 已由 ensureUser 保证有效）
+            if (inviteToken) {
                 const shouldJoin = confirm('是否加入此清单？');
                 if (shouldJoin) {
                     try {
@@ -660,8 +680,7 @@
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({
-                                inviteToken: inviteToken,
-                                userId: parseInt(currentUserId)
+                                inviteToken: inviteToken
                             })
                         });
 
