@@ -1,8 +1,9 @@
 # 排序规则实现报告
 
 **实现日期**: 2026-02-18
-**版本**: 1.0
-**状态**: ✅ 代码已实现，待重启应用测试
+**修复日期**: 2026-02-19
+**版本**: 1.1
+**状态**: ✅ 已实现、已测试、已修复
 
 ---
 
@@ -29,16 +30,21 @@
 - 删除旧方法: `findByListIdOrderByCompletedAscAndCreatedAtAsc()`
 - 新增方法: `findByListId()`，使用 JPQL @Query 实现排序
 
-**新查询**:
+**最终查询** (v1.1 修复版):
 ```java
 @Query("SELECT ti FROM TodoItem ti WHERE ti.list.id = :listId " +
        "ORDER BY ti.completed ASC, " +
-       "ti.priority DESC, " +
+       "CASE ti.priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END ASC, " +
        "ti.dueDate ASC NULLS LAST, " +
        "ti.updatedAt DESC, " +
        "ti.id DESC")
 List<TodoItem> findByListId(@Param("listId") Long listId);
 ```
+
+**修复说明**:
+- v1.0 使用 `priority DESC` 导致按字母排序 (MEDIUM > LOW > HIGH)
+- v1.1 改用 CASE 表达式，HIGH=1, MEDIUM=2, LOW=3
+- 确保 HIGH > MEDIUM > LOW 的正确顺序
 
 ### 2. Service 层
 
@@ -223,12 +229,65 @@ taskkill //F //IM java.exe
 
 ## 下一步
 
-- [ ] 重启应用
-- [ ] 执行测试用例
-- [ ] QA 验证排序功能
+- [x] 重启应用
+- [x] 执行测试用例
+- [x] QA 验证排序功能
+- [x] 修复优先级排序问题
 - [ ] 更新 REGRESSION_TEST_V2A.md 添加排序测试
 
 ---
 
+## 测试结果
+
+**测试日期**: 2026-02-19
+**测试状态**: ✅ 全部通过
+
+### 测试场景
+
+#### 场景 1: 优先级排序
+- 输入: LOW, HIGH(02-20), MEDIUM(02-19)
+- 输出: HIGH(02-20) → MEDIUM(02-19) → LOW
+- 结果: ✅ 通过
+
+#### 场景 2: 同优先级内截止日期排序
+- 输入: HIGH(02-20), HIGH(02-25), HIGH(null)
+- 输出: HIGH(02-20) → HIGH(02-25) → HIGH(null)
+- 结果: ✅ 通过
+
+#### 场景 3: 完成状态优先
+- 输入: 未完成(HIGH), 未完成(LOW), 已完成(MEDIUM)
+- 输出: 未完成(HIGH) → 未完成(LOW) → 已完成(MEDIUM)
+- 结果: ✅ 通过
+
+#### 场景 4: 综合排序 (TC-SORT-08)
+- 事项 7: HIGH, 02-25, 未完成 → 位置 1 ✅
+- 事项 10: MEDIUM, 02-15, 未完成 → 位置 2 ✅
+- 事项 8: MEDIUM, 02-20, 未完成 → 位置 3 ✅
+- 事项 6: LOW, null, 未完成 → 位置 4 ✅
+- 事项 9: HIGH, 02-15, 已完成 → 位置 5 (沉底) ✅
+
+---
+
+## SQL 查询 (最终版)
+
+```sql
+SELECT ti.* FROM todo_item ti
+WHERE ti.list_id = :listId
+ORDER BY
+  ti.completed ASC,           -- 未完成在前
+  CASE ti.priority            -- HIGH > MEDIUM > LOW
+    WHEN 'HIGH' THEN 1
+    WHEN 'MEDIUM' THEN 2
+    WHEN 'LOW' THEN 3
+    ELSE 4
+  END ASC,
+  ti.due_date ASC NULLS LAST, -- 截止日期升序，null 最后
+  ti.updated_at DESC,         -- 最新更新在前
+  ti.id DESC                  -- 最新创建在前（兜底）
+```
+
+---
+
 **实现状态**: ✅ 代码已完成
-**测试状态**: ⏳ 待应用重启后验证
+**测试状态**: ✅ 测试通过
+**修复状态**: ✅ 优先级排序已修复
