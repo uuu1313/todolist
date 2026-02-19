@@ -4,8 +4,10 @@ import com.example.todolist.dto.ListResponse;
 import com.example.todolist.dto.UpdateListRequest;
 import com.example.todolist.entity.TodoList;
 import com.example.todolist.entity.MemberRole;
+import com.example.todolist.entity.User;
 import com.example.todolist.service.ListService;
 import com.example.todolist.service.MemberService;
+import com.example.todolist.repository.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,9 @@ public class ListController {
 
     @Autowired
     private MemberService memberService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @PostMapping
     @Transactional
@@ -46,22 +51,48 @@ public class ListController {
     /**
      * 更新清单标题 (V2-A 新增)
      * PATCH /api/lists/{token}
+     * P0-3: 仅 OWNER 可修改
      */
     @PatchMapping("/{token}")
     public ResponseEntity<ListResponse> updateList(
             @PathVariable String token,
-            @RequestBody @Valid UpdateListRequest request
+            @RequestBody @Valid UpdateListRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
-        TodoList list = listService.updateListTitle(token, request.getTitle());
-        return ResponseEntity.ok(new ListResponse(list));
+        TodoList list = listService.getListByToken(token);
+
+        // P0-3: 权限检查 - 只有 OWNER 可以修改
+        if (userId != null) {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null && !memberService.isOwner(list, user)) {
+                return ResponseEntity.status(403).build();
+            }
+        }
+
+        TodoList updated = listService.updateListTitle(token, request.getTitle());
+        return ResponseEntity.ok(new ListResponse(updated));
     }
 
     /**
      * 删除清单 (V2-A 新增)
      * DELETE /api/lists/{token}
+     * P0-3: 仅 OWNER 可删除
      */
     @DeleteMapping("/{token}")
-    public ResponseEntity<Void> deleteList(@PathVariable String token) {
+    public ResponseEntity<Void> deleteList(
+            @PathVariable String token,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId
+    ) {
+        TodoList list = listService.getListByToken(token);
+
+        // P0-3: 权限检查 - 只有 OWNER 可以删除
+        if (userId != null) {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null && !memberService.isOwner(list, user)) {
+                return ResponseEntity.status(403).build();
+            }
+        }
+
         listService.deleteList(token);
         return ResponseEntity.noContent().build();
     }

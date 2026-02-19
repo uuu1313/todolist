@@ -103,4 +103,21 @@ public class MemberService {
     public boolean isMember(TodoList list, User user) {
         return memberRepository.existsByListAndUser(list, user);
     }
+
+    /**
+     * 检查用户是否是访客 (不在 list_member 表中)
+     */
+    @Transactional(readOnly = true)
+    public boolean isVisitor(TodoList list, User user) {
+        // User is VISITOR if not in list_member
+        return !existsByListAndUser(list, user);
+    }
+
+    /**
+     * 检查用户是否存在于指定清单的成员中
+     */
+    @Transactional(readOnly = true)
+    public boolean existsByListAndUser(TodoList list, User user) {
+        return memberRepository.existsByListAndUser(list, user);
+    }
 }

@@ -362,6 +362,38 @@
 
         /* ==================== V2-B 协作功能样式 ==================== */
 
+        /* 用户角色显示 */
+        #user-role-display {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            margin: 16px 0;
+            text-align: center;
+            color: white;
+            font-size: 15px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        #my-role {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        #my-role.owner {
+            color: #FFD700;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        #my-role.member {
+            color: #E3F2FD;
+        }
+
+        #my-role.visitor {
+            color: #E0E0E0;
+            font-style: italic;
+        }
+
         #members-section {
             margin: 20px 0;
             padding: 15px;
@@ -391,6 +423,25 @@
             align-items: center;
             font-size: 14px;
             color: #374151;
+            transition: all 0.2s;
+        }
+
+        #members-list li.member-item.me {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+            padding-left: 12px;
+        }
+
+        .me-marker {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            background: #2196F3;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
         }
 
         #members-list li button {
@@ -475,6 +526,16 @@
 
         /* 移动端优化 */
         @media (max-width: 430px) {
+            #user-role-display {
+                padding: 10px 12px;
+                margin: 12px 0;
+                font-size: 14px;
+            }
+
+            #my-role {
+                font-size: 15px;
+            }
+
             #members-section,
             #invite-section {
                 padding: 12px;
@@ -484,6 +545,11 @@
             #members-list li {
                 padding: 8px 10px;
                 font-size: 13px;
+            }
+
+            .me-marker {
+                font-size: 11px;
+                padding: 2px 6px;
             }
 
             #members-list li button {
@@ -529,6 +595,11 @@
                     复制链接
                 </button>
             </div>
+        </div>
+
+        <!-- 用户角色显示 -->
+        <div id="user-role-display">
+            我的角色：<span id="my-role">加载中...</span>
         </div>
 
         <!-- 统计信息 -->
@@ -591,7 +662,7 @@
         </section>
 
         <!-- V2-B: 邀请成员区域 -->
-        <section id="invite-section" style="display:none;">
+        <section id="invite-section">
             <h3>邀请成员</h3>
             <button id="generate-invite-btn">生成邀请链接</button>
             <div id="invite-link-container" style="display:none;">
@@ -604,6 +675,7 @@
     <script>
         // ==================== V2-B 用户身份管理 ====================
         let currentUserId = null;
+        let myUserRole = null; // P0-3: 存储当前用户角色 ('OWNER', 'MEMBER', 'VISITOR')
 
         // 获取或创建用户（带自愈机制）
         async function ensureUser() {
@@ -664,21 +736,23 @@
 
         // 初始化
         document.addEventListener('DOMContentLoaded', async () => {
-            // V2-B: 确保 user 存在且有效（带自愈机制）
-            await ensureUser();
-
-            // 检查是否有邀请参数
+            // 修复：检查是否有邀请参数，优先处理
             const urlParams = new URLSearchParams(window.location.search);
             const inviteToken = urlParams.get('invite');
 
-            // V2-B: 处理邀请加入（currentUserId 已由 ensureUser 保证有效）
             if (inviteToken) {
+                // C) join 流程修复：先 ensureUser，再 join，再重定向到纯净 URL
+                await ensureUser();
+
                 const shouldJoin = confirm('是否加入此清单？');
                 if (shouldJoin) {
                     try {
                         const response = await fetch('/api/lists/join', {
                             method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-User-Id': currentUserId  // 显式传递 user id
+                            },
                             body: JSON.stringify({
                                 inviteToken: inviteToken
                             })
@@ -686,32 +760,44 @@
 
                         if (response.ok) {
                             const data = await response.json();
-                            // 重定向到清单页面，移除 invite 参数
+                            // 重定向到清单页面，移除 invite 参数（干净的 URL）
                             window.location.href = `/lists/${data.listToken}`;
+                            return;  // 重定向后不需要继续执行
                         } else {
                             const error = await response.json();
                             showToast(error.message || '加入清单失败', 'error');
+                            // join 失败，跳过后续初始化
+                            return;
                         }
                     } catch (error) {
                         console.error('Error joining list:', error);
                         showToast('加入清单失败，请重试', 'error');
+                        // join 失败，跳过后续初始化
+                        return;
                     }
+                } else {
+                    // 用户取消加入，跳过后续初始化
+                    return;
                 }
-                return;
             }
+
+            // B) 初始化时序统一：
+            // ensureUser() -> loadMembers() -> loadUserRole() -> renderInviteSection() -> loadItems()
+            await ensureUser();
 
             // 设置分享链接
             const shareUrl = window.location.href;
             document.getElementById('shareUrl').value = shareUrl;
 
-            // 加载事项列表
-            loadItems();
+            // 先加载成员和角色（决定权限和 UI）
+            await loadMembers();
+            await loadUserRole();
 
-            // V2-B: 加载成员列表
-            loadMembers();
+            // 根据角色渲染邀请区域和其他 UI
+            renderInviteSection();
 
-            // V2-B: 检查是否是所有者并显示邀请区域
-            checkOwnerAndShowInvite();
+            // 最后加载待办事项（权限已确定）
+            await loadItems();
         });
 
         // 加载事项列表
@@ -719,10 +805,12 @@
             try {
                 // 加载清单详情（包含标题）
                 const listResponse = await fetch(`/api/lists/${token}`);
-                if (listResponse.ok) {
-                    const listData = await listResponse.json();
-                    updateListTitle(listData.title);
+                if (!listResponse.ok) {
+                    showToast('加载清单信息失败', 'error');
+                    throw new Error('Failed to load list details');
                 }
+                const listData = await listResponse.json();
+                updateListTitle(listData.title);
 
                 // 加载事项列表
                 const response = await fetch(`/api/lists/${token}/items`);
@@ -733,10 +821,13 @@
                         setTimeout(() => {
                             window.location.href = '/';
                         }, 2000);
+                    } else if (response.status === 403) {
+                        // D) 访客权限：VISITOR 尝试写操作时后端会返回 403
+                        showToast('您没有权限访问此清单', 'error');
                     } else {
-                        throw new Error('加载失败');
+                        showToast('加载事项列表失败', 'error');
                     }
-                    return;
+                    throw new Error('Failed to load items');
                 }
 
                 const items = await response.json();
@@ -744,7 +835,9 @@
                 updateStats(items);
             } catch (error) {
                 console.error('Error loading items:', error);
-                showToast('加载事项列表失败，请刷新页面重试', 'error');
+                if (error.message !== 'Failed to load items') {
+                    showToast('加载事项列表失败，请刷新页面重试', 'error');
+                }
             }
         }
 
@@ -1213,7 +1306,8 @@
 
                 if (!response.ok) {
                     console.error('Failed to load members');
-                    return;
+                    showToast('加载成员列表失败', 'error');
+                    throw new Error('Failed to load members');
                 }
 
                 const members = await response.json();
@@ -1221,36 +1315,109 @@
                 const list = document.getElementById('members-list');
                 if (!list) return;
 
-                list.innerHTML = members.map(m => `
-                    <li>
-                        ${escapeHtml(m.username)} (${m.role === 'OWNER' ? '所有者' : '成员'})
-                        ${m.role === 'OWNER' && m.id !== parseInt(currentUserId) ?
-                            `<button onclick="removeMember(${m.id})" style="margin-left:10px; padding:4px 8px; background:#fee2e2; color:#dc2626; border:none; border-radius:4px; cursor:pointer;">移除</button>` : ''}
-                    </li>
-                `).join('');
+                const currentUserId = localStorage.getItem('todolist_user_id');
+
+                list.innerHTML = members.map(m => {
+                    const isMe = m.userId == currentUserId;
+                    const marker = isMe ? ' <span class="me-marker">（我）</span>' : '';
+                    const roleDisplay = m.role === 'OWNER' ? '所有者' : '成员';
+
+                    return `
+                        <li class="member-item ${isMe ? 'me' : ''}">
+                            ${escapeHtml(m.username)} (${roleDisplay})${marker}
+                            ${m.role === 'OWNER' && m.userId != currentUserId ?
+                                `<button onclick="removeMember(${m.id})" style="margin-left:10px; padding:4px 8px; background:#fee2e2; color:#dc2626; border:none; border-radius:4px; cursor:pointer;">移除</button>` : ''}
+                        </li>
+                    `;
+                }).join('');
+
+                return members;  // 返回 members 供其他函数使用
             } catch (error) {
                 console.error('Error loading members:', error);
+                showToast('加载成员列表失败，请刷新页面重试', 'error');
+                throw error;
             }
         }
 
-        // 检查是否是所有者并显示邀请区域
-        async function checkOwnerAndShowInvite() {
+        // 加载当前用户角色
+        async function loadUserRole() {
             try {
                 const listToken = getTokenFromUrl();
                 const response = await fetch(`/api/lists/${listToken}/members`);
 
                 if (!response.ok) {
-                    return;
+                    console.error('Failed to load members for role');
+                    showToast('加载用户角色失败', 'error');
+                    throw new Error('Failed to load members for role');
                 }
 
                 const members = await response.json();
-                const isOwner = members.some(m => m.id === parseInt(currentUserId) && m.role === 'OWNER');
+                const currentUserId = localStorage.getItem('todolist_user_id');
+                const myMember = members.find(m => m.userId == currentUserId);
 
-                if (isOwner) {
-                    document.getElementById('invite-section').style.display = 'block';
+                let roleText = '访客';
+                let roleClass = 'visitor';
+
+                // D) 访客权限：未加入成员（list_member 中无当前 userId）视为 VISITOR
+                // P0-3: 设置全局角色变量
+                myUserRole = 'VISITOR';
+
+                if (myMember) {
+                    if (myMember.role === 'OWNER') {
+                        roleText = '所有者';
+                        roleClass = 'owner';
+                        myUserRole = 'OWNER';
+                    } else if (myMember.role === 'MEMBER') {
+                        roleText = '成员';
+                        roleClass = 'member';
+                        myUserRole = 'MEMBER';
+                    }
                 }
+
+                const roleElement = document.getElementById('my-role');
+                if (roleElement) {
+                    roleElement.textContent = roleText;
+                    roleElement.className = roleClass;
+                }
+
+                // P0-3: 根据角色显示/隐藏编辑删除按钮
+                updateListActionButtons();
             } catch (error) {
-                console.error('Error checking owner status:', error);
+                console.error('Error loading user role:', error);
+                const roleElement = document.getElementById('my-role');
+                if (roleElement) {
+                    roleElement.textContent = '未知';
+                }
+                showToast('加载用户角色失败，请刷新页面重试', 'error');
+                throw error;
+            }
+        }
+
+        // P0-3: 根据用户角色显示/隐藏清单操作按钮
+        function updateListActionButtons() {
+            const editButton = document.querySelector('.edit-title-btn');
+            const deleteButton = document.querySelector('.delete-list-btn');
+
+            // 只有 OWNER 可以看到编辑和删除按钮
+            if (myUserRole === 'OWNER') {
+                if (editButton) editButton.style.display = 'block';
+                if (deleteButton) deleteButton.style.display = 'block';
+            } else {
+                if (editButton) editButton.style.display = 'none';
+                if (deleteButton) deleteButton.style.display = 'none';
+            }
+        }
+
+        // A) 邀请区域显示控制：统一在 members 加载完成并计算 isOwner 后执行
+        function renderInviteSection() {
+            const inviteSection = document.getElementById('invite-section');
+            if (!inviteSection) return;
+
+            // 根据全局变量 myUserRole 决定是否显示邀请区域
+            if (myUserRole === 'OWNER') {
+                inviteSection.style.display = 'block';
+            } else {
+                inviteSection.style.display = 'none';
             }
         }
 

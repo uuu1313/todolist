@@ -78,6 +78,23 @@ public class ItemService {
         return itemRepository.findByListId(list.getId());
     }
 
+    @Transactional(readOnly = true)
+    public TodoList getListByToken(String token) {
+        return listRepository.findByToken(token)
+                .orElseThrow(() -> new NotFoundException("List not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public User getUserById(Long userId) {
+        return userRepository.findById(userId).orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public TodoItem getItemById(Long id) {
+        return itemRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Item not found"));
+    }
+
     public TodoItem updateItem(Long id, String token, String title, Boolean completed) {
         return updateItem(id, token, title, completed, null, null, null);
     }
