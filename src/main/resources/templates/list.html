@@ -1710,10 +1710,7 @@
                     throw new Error('更新失败');
                 }
 
-                // 静默刷新，不显示 toast
-                setTimeout(() => {
-                    location.reload();
-                }, 150);
+                await refreshAfterLocalWrite('更新成功');
             } catch (error) {
                 console.error('Error toggling complete:', error);
                 showToast('更新失败，请重试', 'error');
