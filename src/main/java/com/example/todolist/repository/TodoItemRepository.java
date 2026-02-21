@@ -15,7 +15,7 @@ public interface TodoItemRepository extends JpaRepository<TodoItem, Long> {
            "ORDER BY ti.completed ASC, " +
            "CASE ti.priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 WHEN 'LOW' THEN 3 ELSE 4 END ASC, " +
            "ti.dueDate ASC NULLS LAST, " +
-           "ti.updatedAt DESC, " +
-           "ti.id DESC")
+           "ti.createdAt ASC, " +
+           "ti.id ASC")
     List<TodoItem> findByListId(@Param("listId") Long listId);
 }

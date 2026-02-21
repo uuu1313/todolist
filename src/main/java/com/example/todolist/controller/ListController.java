@@ -9,6 +9,7 @@ import com.example.todolist.entity.User;
 import com.example.todolist.service.ListService;
 import com.example.todolist.service.MemberService;
 import com.example.todolist.repository.UserRepository;
+import com.example.todolist.exception.ForbiddenException;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -33,12 +34,18 @@ public class ListController {
     public ResponseEntity<ListResponse> createList(
             @RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
-        TodoList list = listService.createList();
-
-        // V2-B: 创建清单时自动添加创建者为 OWNER
-        if (userId != null) {
-            memberService.addMember(list.getToken(), userId, MemberRole.OWNER);
+        // 强制校验：必须提供用户 ID
+        if (userId == null) {
+            throw new IllegalArgumentException("X-User-Id is required");
         }
+
+        // 验证用户是否存在
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        // 创建清单并立即建立 OWNER 关系（同一事务）
+        TodoList list = listService.createList();
+        memberService.addMember(list.getToken(), userId, MemberRole.OWNER);
 
         return ResponseEntity.status(201).body(new ListResponse(list));
     }
@@ -73,14 +80,19 @@ public class ListController {
             @RequestBody @Valid UpdateListRequest request,
             @RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
+        // 强制校验：必须提供用户 ID
+        if (userId == null) {
+            throw new IllegalArgumentException("X-User-Id is required");
+        }
+
         TodoList list = listService.getListByToken(token);
 
-        // P0-3: 权限检查 - 只有 OWNER 可以修改
-        if (userId != null) {
-            User user = userRepository.findById(userId).orElse(null);
-            if (user != null && !memberService.isOwner(list, user)) {
-                return ResponseEntity.status(403).build();
-            }
+        // 验证用户是否存在并检查权限
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!memberService.isOwner(list, user)) {
+            throw new ForbiddenException("Only OWNER can update the list");
         }
 
         TodoList updated = listService.updateListTitle(token, request.getTitle());
@@ -97,14 +109,19 @@ public class ListController {
             @PathVariable String token,
             @RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
+        // 强制校验：必须提供用户 ID
+        if (userId == null) {
+            throw new IllegalArgumentException("X-User-Id is required");
+        }
+
         TodoList list = listService.getListByToken(token);
 
-        // P0-3: 权限检查 - 只有 OWNER 可以删除
-        if (userId != null) {
-            User user = userRepository.findById(userId).orElse(null);
-            if (user != null && !memberService.isOwner(list, user)) {
-                return ResponseEntity.status(403).build();
-            }
+        // 验证用户是否存在并检查权限
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!memberService.isOwner(list, user)) {
+            throw new ForbiddenException("Only OWNER can delete the list");
         }
 
         listService.deleteList(token);

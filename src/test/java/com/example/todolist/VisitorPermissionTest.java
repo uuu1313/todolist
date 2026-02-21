@@ -18,17 +18,19 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.List;
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Transactional
+// 移除 @Transactional，因为 TestRestTemplate 的 HTTP 请求需要在独立事务中访问数据
 class VisitorPermissionTest {
 
     @Autowired
@@ -52,10 +54,15 @@ class VisitorPermissionTest {
     @Autowired
     private ItemService itemService;
 
+    // 用于 PATCH 请求的 RestTemplate（TestRestTemplate 默认不支持 PATCH）
+    @Autowired
+    private RestTemplateBuilder restTemplateBuilder;
+
     private User owner;
     private User visitor;
     private TodoList todoList;
     private String listToken;
+    private RestTemplate patchCapableRestTemplate;
 
     @BeforeEach
     void setUp() {
@@ -83,6 +90,18 @@ class VisitorPermissionTest {
         memberService.addMember(listToken, owner.getId(), com.example.todolist.entity.MemberRole.OWNER);
 
         // Visitor is NOT added to the list - they are a VISITOR
+
+        // 初始化支持 PATCH 的 RestTemplate
+        patchCapableRestTemplate = restTemplateBuilder
+                .requestFactory(HttpComponentsClientHttpRequestFactory.class)
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(10))
+                .build();
+    }
+
+    // 获取支持 PATCH 的 RestTemplate
+    private RestTemplate getPatchCapableRestTemplate() {
+        return patchCapableRestTemplate;
     }
 
     @Test
@@ -162,14 +181,16 @@ class VisitorPermissionTest {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<UpdateItemRequest> entity = new HttpEntity<>(request, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                "/api/items/" + item.getId() + "?token=" + listToken,
-                HttpMethod.PATCH,
-                entity,
-                String.class
+        // 使用支持 PATCH 的 RestTemplate，构建完整 URL
+        String url = restTemplate.getRestTemplate().getUriTemplateHandler().expand("/api/items/" + item.getId() + "?token=" + listToken).toString();
+
+        // RestTemplate 遇到 4xx 会抛出异常，需要捕获并验证
+        org.springframework.web.client.HttpClientErrorException exception = assertThrows(
+            org.springframework.web.client.HttpClientErrorException.class,
+            () -> getPatchCapableRestTemplate().exchange(url, HttpMethod.PATCH, entity, String.class)
         );
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+        assertThat(exception.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
     }
 
     @Test

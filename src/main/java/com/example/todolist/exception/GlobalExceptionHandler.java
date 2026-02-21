@@ -53,9 +53,12 @@ public class GlobalExceptionHandler {
         e.printStackTrace();
         System.err.println("=== HttpMessageNotReadableException ===");
         System.err.println("Message: " + e.getMessage());
-        System.err.println("Most specific cause: " + (e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : "null"));
+        Throwable mostSpecificCause = e.getMostSpecificCause();
+        System.err.println("Most specific cause: " + (mostSpecificCause != null ? mostSpecificCause.getMessage() : "null"));
+
+        String causeMessage = mostSpecificCause != null ? mostSpecificCause.getMessage() : "Unknown error";
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("Invalid request", "请求体格式错误: " + e.getMostSpecificCause().getMessage()));
+                .body(new ErrorResponse("Invalid request", "请求体格式错误: " + causeMessage));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

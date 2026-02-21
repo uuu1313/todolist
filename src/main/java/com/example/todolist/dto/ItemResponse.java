@@ -23,6 +23,10 @@ public class ItemResponse {
     private String createdBy;
     private String updatedBy;
 
+    // 无参构造函数，支持 Jackson 反序列化
+    public ItemResponse() {
+    }
+
     public ItemResponse(TodoItem item) {
         this.id = item.getId();
         this.title = item.getTitle();

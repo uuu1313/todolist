@@ -1,10 +1,10 @@
-# 开发环境配置（H2 内存数据库）
+# 开发环境配置（H2 文件数据库 - 持久化）
 # 激活方式：--spring.profiles.active=dev 或不指定（默认）
 
 spring:
-  # 数据源配置 - H2 内存数据库
+  # 数据源配置 - H2 文件数据库
   datasource:
-    url: jdbc:h2:mem:todolist;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: jdbc:h2:file:${TODOLIST_DB_DIR:./data}/todolist
     driver-class-name: org.h2.Driver
     username: sa
     password:
