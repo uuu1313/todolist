@@ -7,95 +7,368 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="icon" type="image/x-icon" sizes="16x16" href="/icons/favicon-16.ico">
     <link rel="icon" type="image/x-icon" sizes="32x32" href="/icons/favicon-32.ico">
+    <!-- Heroicons for SVG icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* V2-A 新增样式 */
-        .list-title-container {
+        /* ==================== Mobile First 样式 ==================== */
+
+        /* 新 Header 样式 */
+        .mobile-header {
             display: flex;
             align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
+            justify-content: space-between;
+            padding: 12px 16px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
         }
 
-        .list-title-display {
+        .header-back-btn {
             display: flex;
             align-items: center;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .list-title-edit {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .list-title-input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 2px solid #4f46e5;
+            padding: 8px;
+            color: #64748b;
+            cursor: pointer;
+            border: none;
+            background: none;
             border-radius: 8px;
-            font-size: 24px;
+            transition: all 0.2s;
+        }
+
+        .header-back-btn:hover {
+            background: #f1f5f9;
+            color: #4f46e5;
+        }
+
+        .header-title {
+            flex: 1;
+            text-align: center;
+            font-size: 18px;
             font-weight: 600;
-            color: #1f2937;
+            color: #1e293b;
+            padding: 0 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .header-settings-btn {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            color: #64748b;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .header-settings-btn:hover {
+            background: #f1f5f9;
+            color: #4f46e5;
+        }
+
+        /* FAB 按钮样式 */
+        .fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .fab:hover {
+            background: #4338ca;
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.5);
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        /* Bottom Sheet 样式 */
+        .bottom-sheet-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 150;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .bottom-sheet-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 151;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .bottom-sheet.active {
+            transform: translateY(0);
+        }
+
+        .bottom-sheet-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .bottom-sheet-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .bottom-sheet-close {
+            padding: 8px;
+            color: #64748b;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .bottom-sheet-close:hover {
+            background: #f1f5f9;
+        }
+
+        .bottom-sheet-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #64748b;
+        }
+
+        .form-input,
+        .form-select {
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #1e293b;
             outline: none;
+            transition: border-color 0.2s;
         }
 
-        .list-title-input:focus {
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        .form-input:focus,
+        .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
 
-        .edit-title-btn, .save-title-btn, .cancel-title-btn {
+        .form-submit {
+            padding: 14px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .form-submit:hover {
+            background: #4338ca;
+        }
+
+        /* Drawer 样式 (PC 端) */
+        .settings-drawer-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .settings-drawer-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .settings-drawer {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            max-width: 100%;
+            height: 100%;
+            background: white;
+            box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 201;
+            overflow-y: auto;
+        }
+
+        .settings-drawer.active {
+            right: 0;
+        }
+
+        .drawer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .drawer-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .drawer-close {
+            padding: 8px;
+            color: #64748b;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .drawer-close:hover {
+            background: #f1f5f9;
+        }
+
+        .drawer-content {
+            padding: 20px;
+        }
+
+        .settings-section {
+            margin-bottom: 24px;
+        }
+
+        .settings-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        /* 远端变更提示条 */
+        .remote-update-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #fef3c7;
+            border-bottom: 1px solid #fbbf24;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .remote-update-banner.show {
+            transform: translateY(0);
+        }
+
+        .remote-update-banner-text {
+            font-size: 14px;
+            color: #92400e;
+            font-weight: 500;
+        }
+
+        .remote-update-banner-button {
             padding: 6px 12px;
+            background: #f59e0b;
+            color: white;
             border: none;
             border-radius: 6px;
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.2s;
         }
 
-        .edit-title-btn {
-            background: #f3f4f6;
-            color: #4b5563;
+        .remote-update-banner-button:hover {
+            background: #d97706;
         }
 
-        .edit-title-btn:hover {
-            background: #e5e7eb;
+        /* PC 端任务输入框容器 */
+        .desktop-task-input {
+            display: none;
         }
 
-        .save-title-btn {
-            background: #4f46e5;
-            color: white;
+        /* 响应式：PC 端显示桌面输入框，隐藏 FAB */
+        @media (min-width: 768px) {
+            .fab {
+                display: none;
+            }
+
+            .desktop-task-input {
+                display: block;
+            }
+
+            .mobile-header {
+                padding: 16px 24px;
+            }
+
+            .header-title {
+                font-size: 20px;
+            }
         }
 
-        .save-title-btn:hover {
-            background: #4338ca;
-        }
-
-        .cancel-title-btn {
-            background: #f3f4f6;
-            color: #4b5563;
-        }
-
-        .cancel-title-btn:hover {
-            background: #e5e7eb;
-        }
-
-        .delete-list-btn {
-            padding: 8px 16px;
-            background: #fee2e2;
-            color: #dc2626;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .delete-list-btn:hover {
-            background: #fecaca;
+        /* 响应式：移动端隐藏桌面输入框 */
+        @media (max-width: 767px) {
+            .desktop-task-input {
+                display: none !important;
+            }
         }
 
         .add-item-expanded {
@@ -569,48 +842,26 @@
         }
     </style>
 </head>
-<body>
-    <div class="list-page">
-        <!-- 头部 -->
-        <div class="list-header">
-            <!-- 清单标题区域 -->
-            <div class="list-title-container">
-                <div id="listTitleDisplay" class="list-title-display">
-                    <h1 id="listTitle" class="list-title">我的待办清单</h1>
-                    <button class="edit-title-btn" onclick="startEditListTitle()">编辑</button>
-                </div>
-                <div id="listTitleEdit" class="list-title-edit" style="display: none;">
-                    <input type="text" id="listTitleInput" class="list-title-input" maxlength="100">
-                    <button class="save-title-btn" onclick="saveListTitle()">保存</button>
-                    <button class="cancel-title-btn" onclick="cancelEditListTitle()">取消</button>
-                </div>
-                <button class="delete-list-btn" onclick="deleteList()">删除清单</button>
-            </div>
-        </div>
+<body th:data-list-token="${token}">
+    <!-- 远端变更提示条 -->
+    <div class="remote-update-banner" id="remoteUpdateBanner">
+        <span class="remote-update-banner-text">待办已被其他成员更新</span>
+        <button class="remote-update-banner-button" onclick="location.reload()">刷新</button>
+    </div>
 
-        <!-- 分享链接区域 -->
-        <div class="share-section">
-            <span class="share-label">分享链接</span>
-            <div class="share-url-container">
-                <input type="text" id="shareUrl" class="share-url" readonly>
-                <button id="copyBtn" class="copy-button" onclick="copyShareUrl()">
-                    复制链接
-                </button>
-            </div>
-        </div>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <button class="header-back-btn" onclick="window.location.href='/my-lists'">
+            <i data-lucide="arrow-left" style="width: 24px; height: 24px;"></i>
+        </button>
+        <h1 class="header-title" id="listTitle">我的待办清单</h1>
+        <button class="header-settings-btn" onclick="openSettings()">
+            <i data-lucide="settings" style="width: 24px; height: 24px;"></i>
+        </button>
+    </header>
 
-        <!-- 返回我的清单 -->
-        <div style="margin-top: 0.5rem; text-align: center;">
-            <a href="/my-lists" style="display: inline-block; padding: 0.5rem 1rem; background: #f3f4f6; color: #4b5563; text-decoration: none; border-radius: 8px; font-size: 14px; transition: all 0.2s;">
-                ← 我的清单
-            </a>
-        </div>
-
-        <!-- 用户角色显示 -->
-        <div id="user-role-display">
-            我的角色：<span id="my-role">加载中...</span>
-        </div>
-
+    <!-- 主内容区域 -->
+    <div class="list-page" style="padding-top: 0;">
         <!-- 统计信息 -->
         <div class="stats-bar">
             <div class="stat-item">
@@ -624,8 +875,8 @@
             </div>
         </div>
 
-        <!-- 添加事项表单 -->
-        <div class="add-item-form">
+        <!-- PC 端添加事项表单 -->
+        <div class="desktop-task-input add-item-form">
             <div class="add-item-expanded">
                 <div class="add-item-input-group">
                     <input
@@ -660,28 +911,410 @@
         </div>
 
         <!-- 事项列表 -->
-        <ul class="todo-list" id="itemList">
+        <ul class="todo-list" id="itemList" style="margin-bottom: 80px;">
             <!-- 动态生成的事项列表 -->
         </ul>
-
-        <!-- V2-B: 成员列表区域 -->
-        <section id="members-section">
-            <h3>成员列表</h3>
-            <ul id="members-list"></ul>
-        </section>
-
-        <!-- V2-B: 邀请成员区域 -->
-        <section id="invite-section">
-            <h3>邀请成员</h3>
-            <button id="generate-invite-btn">生成邀请链接</button>
-            <div id="invite-link-container" style="display:none;">
-                <input type="text" id="invite-link" readonly style="flex:1; padding:8px; border:1px solid #d1d5db; border-radius:6px;">
-                <button onclick="copyInviteLink()">复制</button>
-            </div>
-        </section>
     </div>
 
+    <!-- FAB 按钮 (Mobile) -->
+    <button class="fab" onclick="openBottomSheet()" aria-label="添加新事项">
+        <i data-lucide="plus" style="width: 28px; height: 28px;"></i>
+    </button>
+
+    <!-- Bottom Sheet 新建任务表单 (Mobile) -->
+    <div class="bottom-sheet-overlay" id="bottomSheetOverlay" onclick="closeBottomSheet()"></div>
+    <div class="bottom-sheet" id="bottomSheet">
+        <div class="bottom-sheet-header">
+            <h3 class="bottom-sheet-title">新建任务</h3>
+            <button class="bottom-sheet-close" onclick="closeBottomSheet()">
+                <i data-lucide="x" style="width: 20px; height: 20px;"></i>
+            </button>
+        </div>
+        <form class="bottom-sheet-form" onsubmit="addTaskFromBottomSheet(event)">
+            <div class="form-group">
+                <label class="form-label" for="fabTaskTitle">任务名称</label>
+                <input
+                    type="text"
+                    id="fabTaskTitle"
+                    class="form-input"
+                    placeholder="输入任务名称..."
+                    maxlength="200"
+                    required
+                    autofocus
+                >
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="fabTaskPriority">优先级</label>
+                <select id="fabTaskPriority" class="form-select">
+                    <option value="MEDIUM">中 🟡</option>
+                    <option value="HIGH">高 🔴</option>
+                    <option value="LOW">低 🟢</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="fabTaskDueDate">截止日期</label>
+                <input type="date" id="fabTaskDueDate" class="form-input">
+            </div>
+            <button type="submit" class="form-submit">创建</button>
+        </form>
+    </div>
+
+    <!-- Settings Drawer (PC 端) -->
+    <div class="settings-drawer-overlay" id="settingsDrawerOverlay" onclick="closeSettings()"></div>
+    <aside class="settings-drawer" id="settingsDrawer">
+        <div class="drawer-header">
+            <h2 class="drawer-title">清单设置</h2>
+            <button class="drawer-close" onclick="closeSettings()">
+                <i data-lucide="x" style="width: 24px; height: 24px;"></i>
+            </button>
+        </div>
+        <div class="drawer-content">
+            <!-- 当前角色 -->
+            <section class="settings-section">
+                <h3 class="settings-section-title">当前角色</h3>
+                <div id="user-role-display-drawer">
+                    我的角色：<span id="my-role-drawer">加载中...</span>
+                </div>
+            </section>
+
+            <!-- 成员管理 -->
+            <section class="settings-section" id="membersSection">
+                <h3 class="settings-section-title">成员列表</h3>
+                <ul id="members-list-drawer" style="list-style: none; padding: 0; margin: 0;"></ul>
+            </section>
+
+            <!-- 邀请成员 -->
+            <section class="settings-section" id="inviteSection">
+                <h3 class="settings-section-title">邀请成员</h3>
+                <button id="generate-invite-btn-drawer" class="form-submit" style="width: 100%;">生成邀请链接</button>
+                <div id="invite-link-container-drawer" style="display: none; margin-top: 12px; gap: 8px;">
+                    <input type="text" id="invite-link-drawer" readonly class="form-input">
+                    <button type="button" onclick="copyInviteLink()" class="form-submit" style="flex-shrink: 0;">复制</button>
+                </div>
+            </section>
+
+            <!-- 分享链接 -->
+            <section class="settings-section">
+                <h3 class="settings-section-title">分享链接</h3>
+                <div class="form-group">
+                    <input type="text" id="shareUrlDrawer" class="form-input" readonly>
+                    <button type="button" onclick="copyShareUrlFromDrawer()" class="form-submit" style="margin-top: 8px;">复制链接</button>
+                </div>
+            </section>
+
+            <!-- 清单管理 -->
+            <section class="settings-section" id="listManagementSection">
+                <h3 class="settings-section-title">清单管理</h3>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button type="button" onclick="startEditListTitleFromDrawer()" class="form-submit" style="background: #64748b;">编辑清单名称</button>
+                    <button type="button" onclick="deleteList()" class="form-submit" style="background: #ef4444;">删除清单</button>
+                </div>
+            </section>
+
+            <!-- 返回我的清单 -->
+            <section class="settings-section">
+                <button type="button" onclick="window.location.href='/my-lists'" class="form-submit" style="background: #64748b;">← 我的清单</button>
+            </section>
+        </div>
+    </aside>
+
     <script>
+        // ==================== Token 管理 ====================
+
+        // 统一获取 token 的函数（从 Thymeleaf 注入的 data 属性获取）
+        function getListToken() {
+            const token = document.body.dataset.listToken;
+            if (!token) {
+                throw new Error('Missing list token');
+            }
+            return token;
+        }
+
+        // ==================== 本地操作自动刷新 ====================
+
+        // 本地操作成功后延迟刷新
+        function reloadAfterSuccess(message = '操作成功') {
+            showToast(message, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 200);
+        }
+
+        // ==================== 远端变更轮询 ====================
+
+        let initialVersion = null;
+        let pollingTimer = null;
+        let isPolling = false;
+        let hasRemoteUpdate = false;
+
+        // 启动轮询
+        function startVersionPolling() {
+            if (hasRemoteUpdate) return; // 已经显示过提示，不再轮询
+
+            // 页面可见性检查
+            if (document.visibilityState !== 'visible') {
+                // 页面不可见，5秒后再试
+                pollingTimer = setTimeout(startVersionPolling, 5000);
+                return;
+            }
+
+            // 用户正在输入/编辑，跳过本轮
+            if (isUserEditing()) {
+                pollingTimer = setTimeout(startVersionPolling, 15000);
+                return;
+            }
+
+            // 防并发：上一次轮询未完成则跳过
+            if (isPolling) {
+                pollingTimer = setTimeout(startVersionPolling, 15000);
+                return;
+            }
+
+            isPolling = true;
+            checkVersion().finally(() => {
+                isPolling = false;
+                // 15秒后继续下一轮
+                if (!hasRemoteUpdate) {
+                    pollingTimer = setTimeout(startVersionPolling, 15000);
+                }
+            });
+        }
+
+        // 检查版本
+        async function checkVersion() {
+            try {
+                const response = await fetch(`/api/lists/${getListToken()}/version`);
+                if (!response.ok) {
+                    console.warn('Failed to check version');
+                    return;
+                }
+
+                const data = await response.json();
+                const currentVersion = data.version;
+
+                if (initialVersion === null) {
+                    initialVersion = currentVersion;
+                } else if (currentVersion !== initialVersion) {
+                    // 检测到远端变更
+                    showRemoteUpdateBanner();
+                    hasRemoteUpdate = true;
+                }
+            } catch (error) {
+                console.warn('Error checking version:', error);
+            }
+        }
+
+        // 显示远端变更提示条
+        function showRemoteUpdateBanner() {
+            const banner = document.getElementById('remoteUpdateBanner');
+            if (banner) {
+                banner.classList.add('show');
+            }
+        }
+
+        // 判断用户是否正在编辑
+        function isUserEditing() {
+            // Bottom Sheet 打开
+            const bottomSheet = document.getElementById('bottomSheet');
+            if (bottomSheet && bottomSheet.classList.contains('active')) {
+                return true;
+            }
+
+            // Settings Drawer 打开
+            const drawer = document.getElementById('settingsDrawer');
+            if (drawer && drawer.classList.contains('active')) {
+                return true;
+            }
+
+            // 任何输入框获得焦点
+            const activeElement = document.activeElement;
+            if (activeElement && (
+                activeElement.tagName === 'INPUT' ||
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.contentEditable === 'true'
+            )) {
+                return true;
+            }
+
+            return false;
+        }
+
+        // 停止轮询
+        function stopVersionPolling() {
+            if (pollingTimer) {
+                clearTimeout(pollingTimer);
+                pollingTimer = null;
+            }
+            hasRemoteUpdate = true;
+        }
+
+        // ==================== Mobile First 新功能 ====================
+
+        // 初始化 Lucide 图标
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+        });
+
+        // Bottom Sheet 控制
+        function openBottomSheet() {
+            const overlay = document.getElementById('bottomSheetOverlay');
+            const sheet = document.getElementById('bottomSheet');
+            if (overlay && sheet) {
+                overlay.classList.add('active');
+                sheet.classList.add('active');
+                document.body.style.overflow = 'hidden';
+                // 自动聚焦输入框
+                setTimeout(() => {
+                    const titleInput = document.getElementById('fabTaskTitle');
+                    if (titleInput) titleInput.focus();
+                }, 300);
+            }
+        }
+
+        function closeBottomSheet() {
+            const overlay = document.getElementById('bottomSheetOverlay');
+            const sheet = document.getElementById('bottomSheet');
+            if (overlay && sheet) {
+                overlay.classList.remove('active');
+                sheet.classList.remove('active');
+                document.body.style.overflow = '';
+                // 清空表单
+                const titleInput = document.getElementById('fabTaskTitle');
+                const prioritySelect = document.getElementById('fabTaskPriority');
+                const dueDateInput = document.getElementById('fabTaskDueDate');
+                if (titleInput) titleInput.value = '';
+                if (prioritySelect) prioritySelect.value = 'MEDIUM';
+                if (dueDateInput) dueDateInput.value = '';
+            }
+        }
+
+        // 从 Bottom Sheet 添加任务
+        async function addTaskFromBottomSheet(event) {
+            event.preventDefault();
+
+            const titleInput = document.getElementById('fabTaskTitle');
+            const prioritySelect = document.getElementById('fabTaskPriority');
+            const dueDateInput = document.getElementById('fabTaskDueDate');
+
+            const title = titleInput.value.trim();
+
+            if (!title) {
+                showToast('请输入事项标题', 'error');
+                return;
+            }
+
+            if (title.length > 200) {
+                showToast('标题长度不能超过 200 个字符', 'error');
+                return;
+            }
+
+            try {
+                const requestData = {
+                    title: title,
+                    priority: prioritySelect.value,
+                    dueDate: dueDateInput.value || null
+                };
+
+                const response = await fetch(`/api/lists/${getListToken()}/items`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '添加失败');
+                }
+
+                closeBottomSheet();
+                reloadAfterSuccess('添加成功');
+            } catch (error) {
+                console.error('Error adding item:', error);
+                showToast(error.message || '添加失败，请重试', 'error');
+            }
+        }
+
+        // Settings Drawer 控制
+        function openSettings() {
+            const isMobile = window.innerWidth < 768;
+
+            if (isMobile) {
+                // Mobile: 跳转到设置页面
+                window.location.href = `/lists/${getListToken()}/settings`;
+            } else {
+                // PC: 打开 Drawer
+                const overlay = document.getElementById('settingsDrawerOverlay');
+                const drawer = document.getElementById('settingsDrawer');
+                if (overlay && drawer) {
+                    overlay.classList.add('active');
+                    drawer.classList.add('active');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+        }
+
+        function closeSettings() {
+            const overlay = document.getElementById('settingsDrawerOverlay');
+            const drawer = document.getElementById('settingsDrawer');
+            if (overlay && drawer) {
+                overlay.classList.remove('active');
+                drawer.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // 从 Drawer 复制分享链接
+        async function copyShareUrlFromDrawer() {
+            const shareUrlInput = document.getElementById('shareUrlDrawer');
+            if (!shareUrlInput) return;
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareUrlInput.value);
+                } else {
+                    shareUrlInput.select();
+                    document.execCommand('copy');
+                }
+                showToast('链接已复制到剪贴板', 'success');
+            } catch (error) {
+                console.error('Error copying:', error);
+                showToast('复制失败，请手动复制', 'error');
+            }
+        }
+
+        // 从 Drawer 编辑清单标题
+        function startEditListTitleFromDrawer() {
+            const newTitle = prompt('请输入新的清单名称：', document.getElementById('listTitle').textContent);
+            if (newTitle && newTitle.trim()) {
+                saveListTitleFromDrawer(newTitle.trim());
+            }
+        }
+
+        async function saveListTitleFromDrawer(newTitle) {
+            if (newTitle.length > 100) {
+                showToast('标题长度不能超过 100 个字符', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/lists/${getListToken()}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: newTitle })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '更新失败');
+                }
+
+                reloadAfterSuccess('标题更新成功');
+            } catch (error) {
+                console.error('Error updating list title:', error);
+                showToast(error.message || '更新失败，请重试', 'error');
+            }
+        }
+
         // ==================== V2-B 用户身份管理 ====================
         let currentUserId = null;
         let myUserRole = null; // P0-3: 存储当前用户角色 ('OWNER', 'MEMBER', 'VISITOR')
@@ -725,9 +1358,6 @@
             return userId;
         }
 
-        // 获取 token
-        const token = window.location.pathname.split('/').pop();
-
         // 拦截 fetch 请求，自动添加 X-User-Id 头
         const originalFetch = window.fetch;
         window.fetch = function(url, options = {}) {
@@ -737,11 +1367,6 @@
             }
             return originalFetch(url, options);
         };
-
-        // 获取 token（辅助函数）
-        function getTokenFromUrl() {
-            return token;
-        }
 
         // 初始化
         document.addEventListener('DOMContentLoaded', async () => {
@@ -812,9 +1437,12 @@
             // ensureUser() -> loadMembers() -> loadUserRole() -> renderInviteSection() -> loadItems()
             await ensureUser();
 
-            // 设置分享链接
+            // 设置分享链接到 Drawer
             const shareUrl = window.location.href;
-            document.getElementById('shareUrl').value = shareUrl;
+            const shareUrlDrawer = document.getElementById('shareUrlDrawer');
+            if (shareUrlDrawer) {
+                shareUrlDrawer.value = shareUrl;
+            }
 
             // 先加载成员和角色（决定权限和 UI）
             await loadMembers();
@@ -823,15 +1451,24 @@
             // 根据角色渲染邀请区域和其他 UI
             renderInviteSection();
 
+            // 绑定 Drawer 中的生成邀请按钮事件
+            const generateInviteBtnDrawer = document.getElementById('generate-invite-btn-drawer');
+            if (generateInviteBtnDrawer) {
+                generateInviteBtnDrawer.addEventListener('click', generateInvite);
+            }
+
             // 最后加载待办事项（权限已确定）
             await loadItems();
+
+            // 启动远端变更轮询
+            startVersionPolling();
         });
 
         // 加载事项列表
         async function loadItems() {
             try {
                 // 加载清单详情（包含标题）
-                const listResponse = await fetch(`/api/lists/${token}`);
+                const listResponse = await fetch(`/api/lists/${getListToken()}`);
                 if (!listResponse.ok) {
                     showToast('加载清单信息失败', 'error');
                     throw new Error('Failed to load list details');
@@ -840,7 +1477,7 @@
                 updateListTitle(listData.title);
 
                 // 加载事项列表
-                const response = await fetch(`/api/lists/${token}/items`);
+                const response = await fetch(`/api/lists/${getListToken()}/items`);
 
                 if (!response.ok) {
                     if (response.status === 404) {
@@ -872,12 +1509,16 @@
         function updateListTitle(title) {
             const titleElement = document.getElementById('listTitle');
             const titleInput = document.getElementById('listTitleInput');
-            const pageTitle = document.title;
 
-            titleElement.textContent = title;
-            titleInput.value = title;
+            if (titleElement) {
+                titleElement.textContent = title;
+            }
+            if (titleInput) {
+                titleInput.value = title;
+            }
 
             // 更新浏览器标签页标题
+            const pageTitle = document.title;
             if (!pageTitle.includes(title)) {
                 document.title = title + ' - 待办清单';
             }
@@ -978,15 +1619,23 @@
             const total = items.length;
             const completed = items.filter(item => item.completed).length;
 
-            document.getElementById('totalCount').textContent = total;
-            document.getElementById('completedCount').textContent = completed;
+            const totalCountEl = document.getElementById('totalCount');
+            const completedCountEl = document.getElementById('completedCount');
+            if (totalCountEl) totalCountEl.textContent = total;
+            if (completedCountEl) completedCountEl.textContent = completed;
         }
 
-        // 添加事项
+        // 添加事项（PC 端）
         async function addItem() {
             const input = document.getElementById('newItemInput');
             const prioritySelect = document.getElementById('newItemPriority');
             const dueDateInput = document.getElementById('newItemDueDate');
+            const btn = document.getElementById('addItemBtn');
+
+            // PC 端输入框可能不存在（移动端），直接返回
+            if (!input || !prioritySelect || !dueDateInput || !btn) {
+                return;
+            }
 
             const title = input.value.trim();
 
@@ -1001,7 +1650,6 @@
                 return;
             }
 
-            const btn = document.getElementById('addItemBtn');
             const originalText = btn.textContent;
             btn.disabled = true;
             btn.textContent = '添加中...';
@@ -1013,7 +1661,7 @@
                     dueDate: dueDateInput.value || null
                 };
 
-                const response = await fetch(`/api/lists/${token}/items`, {
+                const response = await fetch(`/api/lists/${getListToken()}/items`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestData)
@@ -1024,13 +1672,15 @@
                     throw new Error(error.message || '添加失败');
                 }
 
-                // 重置表单
+                // PC 端：立即清空输入框（提升体验）
                 input.value = '';
                 prioritySelect.value = 'MEDIUM';
                 dueDateInput.value = '';
 
-                await loadItems();
-                showToast('添加成功', 'success');
+                // 200ms 后刷新页面
+                setTimeout(() => {
+                    location.reload();
+                }, 200);
             } catch (error) {
                 console.error('Error adding item:', error);
                 showToast(error.message || '添加失败，请重试', 'error');
@@ -1043,7 +1693,7 @@
         // 切换完成状态
         async function toggleComplete(id, completed) {
             try {
-                const response = await fetch(`/api/items/${id}?token=${token}`, {
+                const response = await fetch(`/api/items/${id}?token=${getListToken()}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ completed })
@@ -1053,7 +1703,10 @@
                     throw new Error('更新失败');
                 }
 
-                await loadItems();
+                // 静默刷新，不显示 toast
+                setTimeout(() => {
+                    location.reload();
+                }, 150);
             } catch (error) {
                 console.error('Error toggling complete:', error);
                 showToast('更新失败，请重试', 'error');
@@ -1167,7 +1820,7 @@
 
             try {
                 // 保存前检测冲突：重新获取最新数据
-                const checkResponse = await fetch(`/api/lists/${token}/items`);
+                const checkResponse = await fetch(`/api/lists/${getListToken()}/items`);
                 if (checkResponse.ok) {
                     const latestItems = await checkResponse.json();
                     const latestItem = latestItems.find(i => i.id === id);
@@ -1193,7 +1846,7 @@
                     dueDate: dueDateInput.value || null
                 };
 
-                const response = await fetch(`/api/items/${id}?token=${token}`, {
+                const response = await fetch(`/api/items/${id}?token=${getListToken()}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(requestData)
@@ -1205,8 +1858,7 @@
                 }
 
                 editingSnapshots.delete(id); // 清除快照
-                await loadItems();
-                showToast('保存成功', 'success');
+                reloadAfterSuccess('保存成功');
             } catch (error) {
                 console.error('Error saving item:', error);
                 showToast(error.message || '保存失败，请重试', 'error');
@@ -1226,7 +1878,7 @@
             }
 
             try {
-                const response = await fetch(`/api/items/${id}?token=${token}`, {
+                const response = await fetch(`/api/items/${id}?token=${getListToken()}`, {
                     method: 'DELETE'
                 });
 
@@ -1234,43 +1886,10 @@
                     throw new Error('删除失败');
                 }
 
-                await loadItems();
-                showToast('删除成功', 'success');
+                reloadAfterSuccess('删除成功');
             } catch (error) {
                 console.error('Error deleting item:', error);
                 showToast('删除失败，请重试', 'error');
-            }
-        }
-
-        // 复制分享链接
-        async function copyShareUrl() {
-            const shareUrlInput = document.getElementById('shareUrl');
-            const copyBtn = document.getElementById('copyBtn');
-
-            try {
-                // 使用 Clipboard API
-                if (navigator.clipboard && navigator.clipboard.writeText) {
-                    await navigator.clipboard.writeText(shareUrlInput.value);
-                } else {
-                    // 降级方案：选中并复制
-                    shareUrlInput.select();
-                    document.execCommand('copy');
-                }
-
-                // 更新按钮状态
-                copyBtn.textContent = '已复制！';
-                copyBtn.classList.add('copied');
-
-                showToast('链接已复制到剪贴板', 'success');
-
-                // 2秒后恢复按钮文本
-                setTimeout(() => {
-                    copyBtn.textContent = '复制链接';
-                    copyBtn.classList.remove('copied');
-                }, 2000);
-            } catch (error) {
-                console.error('Error copying:', error);
-                showToast('复制失败，请手动复制', 'error');
             }
         }
 
@@ -1299,64 +1918,6 @@
             }, 3000);
         }
 
-        // 清单标题编辑功能
-        function startEditListTitle() {
-            const titleDisplay = document.getElementById('listTitleDisplay');
-            const titleEdit = document.getElementById('listTitleEdit');
-            const titleInput = document.getElementById('listTitleInput');
-
-            titleDisplay.style.display = 'none';
-            titleEdit.style.display = 'flex';
-            titleInput.value = document.getElementById('listTitle').textContent;
-            titleInput.focus();
-            titleInput.select();
-        }
-
-        function cancelEditListTitle() {
-            const titleDisplay = document.getElementById('listTitleDisplay');
-            const titleEdit = document.getElementById('listTitleEdit');
-
-            titleDisplay.style.display = 'flex';
-            titleEdit.style.display = 'none';
-        }
-
-        async function saveListTitle() {
-            const titleInput = document.getElementById('listTitleInput');
-            const newTitle = titleInput.value.trim();
-
-            if (!newTitle) {
-                showToast('标题不能为空', 'error');
-                titleInput.focus();
-                return;
-            }
-
-            if (newTitle.length > 100) {
-                showToast('标题长度不能超过 100 个字符', 'error');
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/lists/${token}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title: newTitle })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || '更新失败');
-                }
-
-                const data = await response.json();
-                updateListTitle(data.title);
-                cancelEditListTitle();
-                showToast('标题更新成功', 'success');
-            } catch (error) {
-                console.error('Error updating list title:', error);
-                showToast(error.message || '更新失败，请重试', 'error');
-            }
-        }
-
         // 清单删除功能
         async function deleteList() {
             if (!confirm('确定要删除这个清单吗？删除后无法恢复，所有事项也将被删除。')) {
@@ -1364,7 +1925,7 @@
             }
 
             try {
-                const response = await fetch(`/api/lists/${token}`, {
+                const response = await fetch(`/api/lists/${getListToken()}`, {
                     method: 'DELETE'
                 });
 
@@ -1387,7 +1948,7 @@
         // 加载成员列表
         async function loadMembers() {
             try {
-                const listToken = getTokenFromUrl();
+                const listToken = getListToken();
                 const response = await fetch(`/api/lists/${listToken}/members`);
 
                 if (!response.ok) {
@@ -1398,37 +1959,35 @@
 
                 const members = await response.json();
 
-                const list = document.getElementById('members-list');
-                if (!list) return;
+                // 填充 Drawer 中的成员列表
+                const list = document.getElementById('members-list-drawer');
+                if (list) {
+                    // 问题1修复: 确保类型统一
+                    const currentUserId = Number(localStorage.getItem('todolist_user_id'));
 
-                // 问题1修复: 确保类型统一
-                const currentUserId = Number(localStorage.getItem('todolist_user_id'));
+                    // 计算当前用户角色
+                    const myMember = members.find(m => m.userId == currentUserId);
+                    const isOwner = myMember && myMember.role === 'OWNER';
 
-                // 计算当前用户角色
-                const myMember = members.find(m => m.userId == currentUserId);
-                const isOwner = myMember && myMember.role === 'OWNER';
+                    list.innerHTML = members.map(m => {
+                        const isMe = m.userId == currentUserId;
+                        const marker = isMe ? ' <span class="me-marker">（我）</span>' : '';
+                        const roleDisplay = m.role === 'OWNER' ? '所有者' : '成员';
 
-                list.innerHTML = members.map(m => {
-                    const isMe = m.userId == currentUserId;
-                    const marker = isMe ? ' <span class="me-marker">（我）</span>' : '';
-                    const roleDisplay = m.role === 'OWNER' ? '所有者' : '成员';
+                        // 问题1修复: 移除按钮显示条件
+                        const canRemove = isOwner &&
+                                          m.userId != currentUserId &&
+                                          m.role !== 'OWNER';
 
-                    // 问题1修复: 移除按钮显示条件
-                    // 1) 当前用户必须是 OWNER
-                    // 2) 不能移除自己
-                    // 3) 不能移除 OWNER
-                    const canRemove = isOwner &&
-                                      m.userId != currentUserId &&
-                                      m.role !== 'OWNER';
-
-                    return `
-                        <li class="member-item ${isMe ? 'me' : ''}">
-                            ${escapeHtml(m.username)} (${roleDisplay})${marker}
-                            ${canRemove ?
-                                `<button onclick="removeMember(${m.id})" style="margin-left:10px; padding:4px 8px; background:#fee2e2; color:#dc2626; border:none; border-radius:4px; cursor:pointer;">移除</button>` : ''}
-                        </li>
-                    `;
-                }).join('');
+                        return `
+                            <li style="padding: 10px 12px; margin: 6px 0; background: white; border-radius: 6px; display: flex; align-items: center; font-size: 14px; color: #374151; border: 1px solid #e2e8f0; ${isMe ? 'border-left: 4px solid #2196F3;' : ''}">
+                                <span style="flex: 1;">${escapeHtml(m.username)} (${roleDisplay})${marker}</span>
+                                ${canRemove ?
+                                    `<button onclick="removeMember(${m.id})" style="margin-left:10px; padding:4px 12px; background:#fee2e2; color:#dc2626; border:none; border-radius:4px; cursor:pointer; font-size:13px;">移除</button>` : ''}
+                            </li>
+                        `;
+                    }).join('');
+                }
 
                 return members;  // 返回 members 供其他函数使用
             } catch (error) {
@@ -1441,7 +2000,7 @@
         // 加载当前用户角色
         async function loadUserRole() {
             try {
-                const listToken = getTokenFromUrl();
+                const listToken = getListToken();
                 const response = await fetch(`/api/lists/${listToken}/members`);
 
                 if (!response.ok) {
@@ -1473,57 +2032,42 @@
                     }
                 }
 
-                const roleElement = document.getElementById('my-role');
-                if (roleElement) {
-                    roleElement.textContent = roleText;
-                    roleElement.className = roleClass;
+                // 更新 Drawer 中的角色显示
+                const roleElementDrawer = document.getElementById('my-role-drawer');
+                if (roleElementDrawer) {
+                    roleElementDrawer.textContent = roleText;
+                    roleElementDrawer.className = roleClass;
                 }
-
-                // P0-3: 根据角色显示/隐藏编辑删除按钮
-                updateListActionButtons();
             } catch (error) {
                 console.error('Error loading user role:', error);
-                const roleElement = document.getElementById('my-role');
-                if (roleElement) {
-                    roleElement.textContent = '未知';
+                const roleElementDrawer = document.getElementById('my-role-drawer');
+                if (roleElementDrawer) {
+                    roleElementDrawer.textContent = '未知';
                 }
                 showToast('加载用户角色失败，请刷新页面重试', 'error');
                 throw error;
             }
         }
 
-        // P0-3: 根据用户角色显示/隐藏清单操作按钮
-        function updateListActionButtons() {
-            const editButton = document.querySelector('.edit-title-btn');
-            const deleteButton = document.querySelector('.delete-list-btn');
-
-            // 只有 OWNER 可以看到编辑和删除按钮
-            if (myUserRole === 'OWNER') {
-                if (editButton) editButton.style.display = 'block';
-                if (deleteButton) deleteButton.style.display = 'block';
-            } else {
-                if (editButton) editButton.style.display = 'none';
-                if (deleteButton) deleteButton.style.display = 'none';
-            }
-        }
-
         // A) 邀请区域显示控制：统一在 members 加载完成并计算 isOwner 后执行
         function renderInviteSection() {
-            const inviteSection = document.getElementById('invite-section');
-            if (!inviteSection) return;
+            const inviteSection = document.getElementById('inviteSection');
+            const listManagementSection = document.getElementById('listManagementSection');
 
-            // 根据全局变量 myUserRole 决定是否显示邀请区域
+            // 根据全局变量 myUserRole 决定是否显示邀请区域和清单管理
             if (myUserRole === 'OWNER') {
-                inviteSection.style.display = 'block';
+                if (inviteSection) inviteSection.style.display = 'block';
+                if (listManagementSection) listManagementSection.style.display = 'block';
             } else {
-                inviteSection.style.display = 'none';
+                if (inviteSection) inviteSection.style.display = 'none';
+                if (listManagementSection) listManagementSection.style.display = 'none';
             }
         }
 
         // 生成邀请链接
         async function generateInvite() {
             try {
-                const listToken = getTokenFromUrl();
+                const listToken = getListToken();
                 const response = await fetch(`/api/lists/${listToken}/invites`, {
                     method: 'POST'
                 });
@@ -1535,8 +2079,15 @@
 
                 const invite = await response.json();
                 const link = `${window.location.origin}${window.location.pathname}?invite=${invite.inviteToken}`;
-                document.getElementById('invite-link').value = link;
-                document.getElementById('invite-link-container').style.display = 'flex';
+                const inviteLinkInput = document.getElementById('invite-link-drawer');
+                const inviteLinkContainer = document.getElementById('invite-link-container-drawer');
+
+                if (inviteLinkInput) {
+                    inviteLinkInput.value = link;
+                }
+                if (inviteLinkContainer) {
+                    inviteLinkContainer.style.display = 'flex';
+                }
                 showToast('邀请链接生成成功', 'success');
             } catch (error) {
                 console.error('Error generating invite:', error);
@@ -1546,13 +2097,14 @@
 
         // 复制邀请链接
         function copyInviteLink() {
-            const link = document.getElementById('invite-link');
-            link.select();
+            const link = document.getElementById('invite-link-drawer');
+            if (!link) return;
 
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     navigator.clipboard.writeText(link.value);
                 } else {
+                    link.select();
                     document.execCommand('copy');
                 }
                 showToast('邀请链接已复制！', 'success');
@@ -1567,7 +2119,7 @@
             if (!confirm('确定移除此成员？')) return;
 
             try {
-                const listToken = getTokenFromUrl();
+                const listToken = getListToken();
                 const response = await fetch(`/api/lists/${listToken}/members/${userId}`, {
                     method: 'DELETE'
                 });
@@ -1592,25 +2144,21 @@
             return div.innerHTML;
         }
 
-        // 绑定添加按钮事件
-        document.getElementById('addItemBtn').addEventListener('click', addItem);
+        // 绑定添加按钮事件 (PC 端输入框)
+        const addItemBtn = document.getElementById('addItemBtn');
+        if (addItemBtn) {
+            addItemBtn.addEventListener('click', addItem);
+        }
 
-        // 绑定输入框回车事件
-        document.getElementById('newItemInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                addItem();
-            }
-        });
-
-        // 绑定标题输入框回车事件
-        document.getElementById('listTitleInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                saveListTitle();
-            }
-        });
-
-        // V2-B: 绑定生成邀请按钮事件
-        document.getElementById('generate-invite-btn').addEventListener('click', generateInvite);
+        // 绑定输入框回车事件 (PC 端输入框)
+        const newItemInput = document.getElementById('newItemInput');
+        if (newItemInput) {
+            newItemInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addItem();
+                }
+            });
+        }
     </script>
 </body>
 </html>

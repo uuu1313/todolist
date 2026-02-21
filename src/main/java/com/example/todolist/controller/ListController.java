@@ -2,6 +2,7 @@ package com.example.todolist.controller;
 
 import com.example.todolist.dto.ListResponse;
 import com.example.todolist.dto.UpdateListRequest;
+import com.example.todolist.dto.VersionResponse;
 import com.example.todolist.entity.TodoList;
 import com.example.todolist.entity.MemberRole;
 import com.example.todolist.entity.User;
@@ -46,6 +47,19 @@ public class ListController {
     public ResponseEntity<ListResponse> getList(@PathVariable String token) {
         TodoList list = listService.getListByToken(token);
         return ResponseEntity.ok(new ListResponse(list));
+    }
+
+    /**
+     * 获取清单版本号
+     * 用于前端轮询检测清单是否有更新
+     * GET /api/lists/{token}/version
+     */
+    @GetMapping("/{token}/version")
+    public ResponseEntity<VersionResponse> getVersion(@PathVariable String token) {
+        TodoList list = listService.getListByToken(token);
+        // 使用 updatedAt 的毫秒时间戳作为版本号
+        long version = list.getUpdatedAt().atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+        return ResponseEntity.ok(new VersionResponse(version));
     }
 
     /**

@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>清单设置</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="icon" type="image/x-icon" sizes="16x16" href="/icons/favicon-16.ico">
+    <link rel="icon" type="image/x-icon" sizes="32x32" href="/icons/favicon-32.ico">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .settings-page {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .settings-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .settings-section {
+            margin: 20px 0;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .settings-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .settings-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+
+        .settings-label {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .settings-value {
+            font-size: 16px;
+            color: #1e293b;
+            font-weight: 500;
+        }
+
+        .settings-button {
+            width: 100%;
+            padding: 14px;
+            margin-top: 8px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .settings-button:hover {
+            background: #4338ca;
+        }
+
+        .settings-button.danger {
+            background: #ef4444;
+        }
+
+        .settings-button.danger:hover {
+            background: #dc2626;
+        }
+
+        .settings-button.secondary {
+            background: #64748b;
+        }
+
+        .settings-button.secondary:hover {
+            background: #475569;
+        }
+
+        .members-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .member-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: #f8fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .member-item.me {
+            background: #E3F2FD;
+            border-left: 4px solid #2196F3;
+        }
+
+        .me-marker {
+            display: inline-flex;
+            align-items: center;
+            padding: 2px 8px;
+            background: #2196F3;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .remove-member-btn {
+            margin-left: auto;
+            padding: 6px 12px;
+            background: #fee2e2;
+            color: #dc2626;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .remove-member-btn:hover {
+            background: #fecaca;
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .role-owner {
+            background: #FEF3C7;
+            color: #D97706;
+        }
+
+        .role-member {
+            background: #DBEAFE;
+            color: #1D4ED8;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-field:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .invite-link-container {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        /* 远端变更提示条 */
+        .remote-update-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #fef3c7;
+            border-bottom: 1px solid #fbbf24;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .remote-update-banner.show {
+            transform: translateY(0);
+        }
+
+        .remote-update-banner-text {
+            font-size: 14px;
+            color: #92400e;
+            font-weight: 500;
+        }
+
+        .remote-update-banner-button {
+            padding: 6px 12px;
+            background: #f59e0b;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .remote-update-banner-button:hover {
+            background: #d97706;
+        }
+    </style>
+</head>
+<body th:data-list-token="${token}">
+    <!-- 远端变更提示条 -->
+    <div class="remote-update-banner" id="remoteUpdateBanner">
+        <span class="remote-update-banner-text">待办已被其他成员更新</span>
+        <button class="remote-update-banner-button" onclick="location.reload()">刷新</button>
+    </div>
+
+    <!-- Header -->
+    <header class="settings-header">
+        <button onclick="history.back()" style="padding: 8px; background: none; border: none; cursor: pointer;">
+            <i data-lucide="arrow-left" style="width: 24px; height: 24px; color: #64748b;"></i>
+        </button>
+        <h1 class="settings-title">清单设置</h1>
+        <div style="width: 40px;"></div>
+    </header>
+
+    <div class="settings-page">
+        <!-- 当前角色 -->
+        <section class="settings-section">
+            <h2 class="settings-section-title">当前角色</h2>
+            <div class="settings-item">
+                <div class="settings-label">我的角色</div>
+                <div class="settings-value" id="myRole">加载中...</div>
+            </div>
+        </section>
+
+        <!-- 成员管理 -->
+        <section class="settings-section" id="membersSection">
+            <h2 class="settings-section-title">成员列表</h2>
+            <ul class="members-list" id="membersList"></ul>
+        </section>
+
+        <!-- 邀请成员 -->
+        <section class="settings-section" id="inviteSection">
+            <h2 class="settings-section-title">邀请成员</h2>
+            <button id="generateInviteBtn" class="settings-button">生成邀请链接</button>
+            <div id="inviteLinkContainer" class="invite-link-container" style="display: none;">
+                <input type="text" id="inviteLink" class="input-field" readonly>
+                <button onclick="copyInviteLink()" class="settings-button" style="width: auto; margin-top: 0;">复制</button>
+            </div>
+        </section>
+
+        <!-- 分享链接 -->
+        <section class="settings-section">
+            <h2 class="settings-section-title">分享链接</h2>
+            <div class="settings-item">
+                <div class="settings-label">清单链接</div>
+                <input type="text" id="shareUrl" class="input-field" readonly style="margin-top: 8px;">
+                <button onclick="copyShareUrl()" class="settings-button">复制链接</button>
+            </div>
+        </section>
+
+        <!-- 清单管理 -->
+        <section class="settings-section" id="listManagementSection">
+            <h2 class="settings-section-title">清单管理</h2>
+            <button onclick="editListTitle()" class="settings-button secondary">编辑清单名称</button>
+            <button onclick="deleteList()" class="settings-button danger">删除清单</button>
+        </section>
+
+        <!-- 返回按钮 -->
+        <section class="settings-section">
+            <button onclick="window.location.href='/my-lists'" class="settings-button secondary">← 我的清单</button>
+        </section>
+    </div>
+
+    <script>
+        // ==================== Token 管理 ====================
+
+        // 统一获取 token 的函数（从 Thymeleaf 注入的 data 属性获取）
+        function getListToken() {
+            const token = document.body.dataset.listToken;
+            if (!token) {
+                throw new Error('Missing list token');
+            }
+            return token;
+        }
+
+        // ==================== 本地操作自动刷新 ====================
+
+        // 本地操作成功后延迟刷新
+        function reloadAfterSuccess(message = '操作成功') {
+            showToast(message, 'success');
+            setTimeout(() => {
+                location.reload();
+            }, 200);
+        }
+
+        // ==================== 远端变更轮询 ====================
+
+        let initialVersion = null;
+        let pollingTimer = null;
+        let isPolling = false;
+        let hasRemoteUpdate = false;
+
+        // 启动轮询
+        function startVersionPolling() {
+            if (hasRemoteUpdate) return;
+
+            if (document.visibilityState !== 'visible') {
+                pollingTimer = setTimeout(startVersionPolling, 5000);
+                return;
+            }
+
+            if (isUserEditing()) {
+                pollingTimer = setTimeout(startVersionPolling, 15000);
+                return;
+            }
+
+            if (isPolling) {
+                pollingTimer = setTimeout(startVersionPolling, 15000);
+                return;
+            }
+
+            isPolling = true;
+            checkVersion().finally(() => {
+                isPolling = false;
+                if (!hasRemoteUpdate) {
+                    pollingTimer = setTimeout(startVersionPolling, 15000);
+                }
+            });
+        }
+
+        // 检查版本
+        async function checkVersion() {
+            try {
+                const response = await fetch(`/api/lists/${getListToken()}/version`);
+                if (!response.ok) {
+                    console.warn('Failed to check version');
+                    return;
+                }
+
+                const data = await response.json();
+                const currentVersion = data.version;
+
+                if (initialVersion === null) {
+                    initialVersion = currentVersion;
+                } else if (currentVersion !== initialVersion) {
+                    showRemoteUpdateBanner();
+                    hasRemoteUpdate = true;
+                }
+            } catch (error) {
+                console.warn('Error checking version:', error);
+            }
+        }
+
+        // 显示远端变更提示条
+        function showRemoteUpdateBanner() {
+            const banner = document.getElementById('remoteUpdateBanner');
+            if (banner) {
+                banner.classList.add('show');
+            }
+        }
+
+        // 判断用户是否正在编辑
+        function isUserEditing() {
+            const activeElement = document.activeElement;
+            if (activeElement && (
+                activeElement.tagName === 'INPUT' ||
+                activeElement.tagName === 'TEXTAREA' ||
+                activeElement.contentEditable === 'true'
+            )) {
+                return true;
+            }
+            return false;
+        }
+
+        // 停止轮询
+        function stopVersionPolling() {
+            if (pollingTimer) {
+                clearTimeout(pollingTimer);
+                pollingTimer = null;
+            }
+            hasRemoteUpdate = true;
+        }
+
+        // 初始化 Lucide 图标
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            init();
+        });
+
+        let currentUserId = null;
+        let myUserRole = null;
+
+        async function init() {
+            // 设置分享链接
+            const shareUrl = window.location.href.replace('/settings', '');
+            const shareUrlInput = document.getElementById('shareUrl');
+            if (shareUrlInput) {
+                shareUrlInput.value = shareUrl;
+            }
+
+            // 确保用户
+            await ensureUser();
+
+            // 加载数据
+            await loadMembers();
+            await loadUserRole();
+
+            // 绑定事件
+            const generateInviteBtn = document.getElementById('generateInviteBtn');
+            if (generateInviteBtn) {
+                generateInviteBtn.addEventListener('click', generateInvite);
+            }
+
+            // 启动远端变更轮询
+            startVersionPolling();
+        }
+
+        async function ensureUser() {
+            let userId = localStorage.getItem('todolist_user_id');
+
+            if (userId) {
+                try {
+                    const response = await fetch(`/api/users/${userId}`);
+                    if (!response.ok) {
+                        userId = null;
+                    }
+                } catch (error) {
+                    userId = null;
+                }
+            }
+
+            if (!userId) {
+                try {
+                    const response = await fetch('/api/users', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'}
+                    });
+                    const user = await response.json();
+                    userId = user.id;
+                    localStorage.setItem('todolist_user_id', userId);
+                } catch (error) {
+                    console.error('Error creating user:', error);
+                }
+            }
+
+            currentUserId = userId;
+
+            // 拦截 fetch
+            const originalFetch = window.fetch;
+            window.fetch = function(url, options = {}) {
+                if (currentUserId) {
+                    options.headers = options.headers || {};
+                    options.headers['X-User-Id'] = currentUserId;
+                }
+                return originalFetch(url, options);
+            };
+        }
+
+        async function loadMembers() {
+            try {
+                const response = await fetch(`/api/lists/${getListToken()}/members`);
+                if (!response.ok) throw new Error('Failed to load members');
+
+                const members = await response.json();
+                const list = document.getElementById('membersList');
+                const currentUserIdNum = Number(currentUserId);
+                const myMember = members.find(m => m.userId == currentUserIdNum);
+                const isOwner = myMember && myMember.role === 'OWNER';
+
+                list.innerHTML = members.map(m => {
+                    const isMe = m.userId == currentUserIdNum;
+                    const marker = isMe ? '<span class="me-marker">（我）</span>' : '';
+                    const roleClass = m.role === 'OWNER' ? 'role-owner' : 'role-member';
+                    const roleText = m.role === 'OWNER' ? '所有者' : '成员';
+                    const canRemove = isOwner && m.userId != currentUserIdNum && m.role !== 'OWNER';
+
+                    return `
+                        <li class="member-item ${isMe ? 'me' : ''}">
+                            <div style="flex: 1;">
+                                ${escapeHtml(m.username)} ${marker}
+                                <span class="role-badge ${roleClass}">${roleText}</span>
+                            </div>
+                            ${canRemove ? `<button onclick="removeMember(${m.id})" class="remove-member-btn">移除</button>` : ''}
+                        </li>
+                    `;
+                }).join('');
+
+                return members;
+            } catch (error) {
+                console.error('Error loading members:', error);
+                showToast('加载成员列表失败', 'error');
+                throw error;
+            }
+        }
+
+        async function loadUserRole() {
+            try {
+                const response = await fetch(`/api/lists/${getListToken()}/members`);
+                if (!response.ok) throw new Error('Failed to load role');
+
+                const members = await response.json();
+                const myMember = members.find(m => m.userId == currentUserId);
+
+                let roleText = '访客';
+                myUserRole = 'VISITOR';
+
+                if (myMember) {
+                    if (myMember.role === 'OWNER') {
+                        roleText = '所有者';
+                        myUserRole = 'OWNER';
+                    } else if (myMember.role === 'MEMBER') {
+                        roleText = '成员';
+                        myUserRole = 'MEMBER';
+                    }
+                }
+
+                const myRoleEl = document.getElementById('myRole');
+                if (myRoleEl) {
+                    myRoleEl.textContent = roleText;
+                }
+
+                // 控制区域显示
+                const inviteSection = document.getElementById('inviteSection');
+                const listManagementSection = document.getElementById('listManagementSection');
+
+                if (myUserRole === 'OWNER') {
+                    if (inviteSection) inviteSection.style.display = 'block';
+                    if (listManagementSection) listManagementSection.style.display = 'block';
+                } else {
+                    if (inviteSection) inviteSection.style.display = 'none';
+                    if (listManagementSection) listManagementSection.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading role:', error);
+                const myRoleEl = document.getElementById('myRole');
+                if (myRoleEl) {
+                    myRoleEl.textContent = '未知';
+                }
+            }
+        }
+
+        async function generateInvite() {
+            try {
+                const response = await fetch(`/api/lists/${getListToken()}/invites`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '生成邀请链接失败');
+                }
+
+                const invite = await response.json();
+                const link = `${window.location.origin}${window.location.pathname.replace('/settings', '')}?invite=${invite.inviteToken}`;
+                const inviteLinkInput = document.getElementById('inviteLink');
+                const inviteLinkContainer = document.getElementById('inviteLinkContainer');
+
+                if (inviteLinkInput) {
+                    inviteLinkInput.value = link;
+                }
+                if (inviteLinkContainer) {
+                    inviteLinkContainer.style.display = 'flex';
+                }
+                showToast('邀请链接生成成功', 'success');
+            } catch (error) {
+                console.error('Error generating invite:', error);
+                showToast(error.message || '生成邀请链接失败', 'error');
+            }
+        }
+
+        async function copyInviteLink() {
+            const link = document.getElementById('inviteLink');
+            if (!link) return;
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(link.value);
+                } else {
+                    link.select();
+                    document.execCommand('copy');
+                }
+                showToast('邀请链接已复制！', 'success');
+            } catch (error) {
+                showToast('复制失败', 'error');
+            }
+        }
+
+        async function copyShareUrl() {
+            const shareUrl = document.getElementById('shareUrl');
+            if (!shareUrl) return;
+
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(shareUrl.value);
+                } else {
+                    shareUrl.select();
+                    document.execCommand('copy');
+                }
+                showToast('链接已复制到剪贴板', 'success');
+            } catch (error) {
+                showToast('复制失败', 'error');
+            }
+        }
+
+        function editListTitle() {
+            const newTitle = prompt('请输入新的清单名称：');
+            if (newTitle && newTitle.trim()) {
+                saveListTitle(newTitle.trim());
+            }
+        }
+
+        async function saveListTitle(newTitle) {
+            if (newTitle.length > 100) {
+                showToast('标题长度不能超过 100 个字符', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/lists/${getListToken()}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title: newTitle })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '更新失败');
+                }
+
+                // 成功后跳转到任务页，而不是停留在 settings 页刷新
+                showToast('标题更新成功', 'success');
+                setTimeout(() => {
+                    window.location.assign(`/lists/${getListToken()}`);
+                }, 200);
+            } catch (error) {
+                showToast(error.message || '更新失败', 'error');
+            }
+        }
+
+        async function deleteList() {
+            if (!confirm('确定要删除这个清单吗？删除后无法恢复，所有事项也将被删除。')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/lists/${getListToken()}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('删除失败');
+                }
+
+                showToast('清单已删除', 'success');
+                setTimeout(() => {
+                    window.location.href = '/my-lists';
+                }, 1000);
+            } catch (error) {
+                showToast('删除失败，请重试', 'error');
+            }
+        }
+
+        async function removeMember(userId) {
+            if (!confirm('确定移除此成员？')) return;
+
+            try {
+                const response = await fetch(`/api/lists/${getListToken()}/members/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || '移除成员失败');
+                }
+
+                reloadAfterSuccess('成员已移除');
+            } catch (error) {
+                showToast(error.message || '移除成员失败', 'error');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'success') {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) existingToast.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    if (toast.parentNode) document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
