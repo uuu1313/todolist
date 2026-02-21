@@ -1033,11 +1033,8 @@
         // ==================== 本地操作自动刷新 ====================
 
         // 本地操作成功后延迟刷新
-        function reloadAfterSuccess(message = '操作成功') {
-            showToast(message, 'success');
-            setTimeout(() => {
-                location.reload();
-            }, 200);
+        async function reloadAfterSuccess(message = '操作成功') {
+            await refreshAfterLocalWrite(message);
         }
 
         // ==================== 远端变更轮询 ====================
@@ -1110,6 +1107,19 @@
             if (banner) {
                 banner.classList.add('show');
             }
+        }
+
+        // Local write success path without full page reload
+        async function refreshAfterLocalWrite(message = '操作成功') {
+            await loadItems();
+            initialVersion = null;
+            hasRemoteUpdate = false;
+            const banner = document.getElementById('remoteUpdateBanner');
+            if (banner) {
+                banner.classList.remove('show');
+            }
+            await checkVersion();
+            showToast(message, 'success');
         }
 
         // 判断用户是否正在编辑
@@ -1227,7 +1237,7 @@
                 }
 
                 closeBottomSheet();
-                reloadAfterSuccess('添加成功');
+                await refreshAfterLocalWrite('添加成功');
             } catch (error) {
                 console.error('Error adding item:', error);
                 showToast(error.message || '添加失败，请重试', 'error');
@@ -1677,10 +1687,7 @@
                 prioritySelect.value = 'MEDIUM';
                 dueDateInput.value = '';
 
-                // 200ms 后刷新页面
-                setTimeout(() => {
-                    location.reload();
-                }, 200);
+                await refreshAfterLocalWrite('添加成功');
             } catch (error) {
                 console.error('Error adding item:', error);
                 showToast(error.message || '添加失败，请重试', 'error');

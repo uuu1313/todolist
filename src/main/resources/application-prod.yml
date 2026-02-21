@@ -9,7 +9,7 @@ spring:
     # 2. 未设置则使用 ./data 目录
     # 3. 数据库文件名固定为 todolist（最终：todolist.mv.db）
     # 单机部署不需要 AUTO_SERVER 参数
-    url: jdbc:h2:file:${TODOLIST_DB_DIR:./data}/todolist
+    url: jdbc:h2:file:${TODOLIST_DB_DIR:/www/wwwroot/todolist/data}/todolist
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -46,6 +46,6 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   file:
     # 日志文件配置（可选）
-    name: ${TODOLIST_LOG_DIR:./logs}/todolist.log
+    name: ${TODOLIST_LOG_DIR:/www/wwwroot/todolist/logs}/todolist.log
     max-size: 100MB
     max-history: 30

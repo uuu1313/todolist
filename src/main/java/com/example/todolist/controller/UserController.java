@@ -41,11 +41,26 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /**
+     * 更新用户名
+     * P1-1: 防止水平越权 - 只允许用户修改自己的信息
+     */
     @PatchMapping("/{id}")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable Long id,
-            @RequestBody UpdateUserRequest request
+            @RequestBody UpdateUserRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId
     ) {
+        // 强制校验：必须提供用户 ID
+        if (userId == null) {
+            throw new IllegalArgumentException("X-User-Id is required");
+        }
+
+        // 防止水平越权：只允许用户修改自己的信息
+        if (!userId.equals(id)) {
+            throw new com.example.todolist.exception.ForbiddenException("只能修改自己的用户信息");
+        }
+
         try {
             User user = userService.updateUser(id, request.getUsername());
             return ResponseEntity.ok(new UserResponse(user));
